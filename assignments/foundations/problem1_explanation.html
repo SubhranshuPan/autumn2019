@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem 1: Optimization & Probability — Explained</title>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #232733;
+      --border: #2e3348;
+      --text: #e4e6f0;
+      --text-dim: #9499b3;
+      --accent: #6c8aff;
+      --accent-glow: rgba(108, 138, 255, 0.15);
+      --green: #4ade80;
+      --green-glow: rgba(74, 222, 128, 0.12);
+      --amber: #fbbf24;
+      --amber-glow: rgba(251, 191, 36, 0.12);
+      --rose: #fb7185;
+      --rose-glow: rgba(251, 113, 133, 0.12);
+      --purple: #c084fc;
+      --purple-glow: rgba(192, 132, 252, 0.12);
+      --cyan: #22d3ee;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.75;
+      min-height: 100vh;
+    }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    /* Header */
+    .hero {
+      background: linear-gradient(135deg, #1a1040 0%, #0f1117 50%, #0a1628 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 3.5rem 2rem 3rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle at 30% 50%, rgba(108,138,255,0.06) 0%, transparent 50%),
+                  radial-gradient(circle at 70% 50%, rgba(192,132,252,0.04) 0%, transparent 50%);
+      pointer-events: none;
+    }
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #6c8aff, #c084fc);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      margin-bottom: 0.5rem;
+    }
+    .hero p {
+      color: var(--text-dim);
+      font-size: 1.05rem;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* Navigation tabs */
+    .nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(15, 17, 23, 0.85);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: center;
+      gap: 0.25rem;
+      padding: 0.75rem 1rem;
+      flex-wrap: wrap;
+    }
+    .nav-btn {
+      background: transparent;
+      color: var(--text-dim);
+      border: 1px solid transparent;
+      padding: 0.5rem 1.1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 0.88rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .nav-btn:hover {
+      background: var(--surface);
+      color: var(--text);
+      border-color: var(--border);
+    }
+    .nav-btn.active {
+      background: var(--accent-glow);
+      color: var(--accent);
+      border-color: rgba(108,138,255,0.3);
+    }
+
+    /* Main */
+    .container {
+      max-width: 820px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 6rem;
+    }
+
+    /* Problem section */
+    .problem {
+      display: none;
+      animation: fadeIn 0.35s ease;
+    }
+    .problem.active { display: block; }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Section title */
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.25rem;
+      color: var(--text);
+    }
+    .section-subtitle {
+      color: var(--text-dim);
+      font-size: 0.95rem;
+      margin-bottom: 2rem;
+      padding-bottom: 1.25rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    /* Cards */
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 1.75rem;
+      margin-bottom: 1.5rem;
+      transition: border-color 0.2s;
+    }
+    .card:hover { border-color: rgba(108,138,255,0.25); }
+
+    .card-label {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 0.75rem;
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 5px;
+    }
+    .card-label.setup    { background: var(--accent-glow); color: var(--accent); }
+    .card-label.intuition { background: var(--green-glow); color: var(--green); }
+    .card-label.solution  { background: var(--purple-glow); color: var(--purple); }
+    .card-label.answer    { background: var(--amber-glow); color: var(--amber); }
+    .card-label.warning   { background: var(--rose-glow); color: var(--rose); }
+    .card-label.lecture   { background: rgba(34,211,238,0.12); color: var(--cyan); }
+
+    .card h3 {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .card p, .card li {
+      color: var(--text);
+      line-height: 1.8;
+      margin-bottom: 0.6rem;
+    }
+
+    .card ul, .card ol {
+      padding-left: 1.5rem;
+    }
+
+    /* Step markers */
+    .step {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+      margin-bottom: 1.25rem;
+    }
+    .step-num {
+      flex-shrink: 0;
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background: var(--accent-glow);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 0.82rem;
+      margin-top: 0.2rem;
+      border: 1px solid rgba(108,138,255,0.25);
+    }
+    .step-content { flex: 1; }
+
+    /* Answer box */
+    .answer-box {
+      background: linear-gradient(135deg, rgba(251,191,36,0.08), rgba(251,191,36,0.03));
+      border: 1px solid rgba(251,191,36,0.25);
+      border-radius: 12px;
+      padding: 1.25rem 1.5rem;
+      text-align: center;
+      margin: 1.25rem 0;
+      font-size: 1.15rem;
+    }
+
+    /* Math display */
+    .math-line {
+      background: var(--surface2);
+      border-radius: 8px;
+      padding: 0.9rem 1.25rem;
+      margin: 0.75rem 0;
+      overflow-x: auto;
+      border-left: 3px solid var(--accent);
+    }
+
+    .math-chain {
+      background: var(--surface2);
+      border-radius: 10px;
+      padding: 1.25rem 1.5rem;
+      margin: 1rem 0;
+      border-left: 3px solid var(--purple);
+    }
+    .math-chain .math-row {
+      padding: 0.3rem 0;
+    }
+
+    /* Table */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 1rem 0;
+      font-size: 0.92rem;
+    }
+    th {
+      background: var(--surface2);
+      padding: 0.65rem 1rem;
+      text-align: left;
+      font-weight: 600;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+    td {
+      padding: 0.6rem 1rem;
+      border-top: 1px solid var(--border);
+    }
+    tr:hover td { background: rgba(108,138,255,0.03); }
+
+    /* Highlight */
+    .hl { color: var(--accent); font-weight: 600; }
+    .hl-green { color: var(--green); font-weight: 600; }
+    .hl-amber { color: var(--amber); font-weight: 600; }
+    .hl-rose { color: var(--rose); font-weight: 600; }
+    .hl-purple { color: var(--purple); font-weight: 600; }
+
+    /* Emoji bullet */
+    .emoji-point {
+      display: flex;
+      align-items: flex-start;
+      gap: 0.65rem;
+      margin-bottom: 0.5rem;
+    }
+    .emoji-point .em { flex-shrink: 0; font-size: 1.1rem; margin-top: 0.15rem; }
+
+    /* Summary table at end */
+    .summary-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+    .summary-item {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 1.15rem;
+    }
+    .summary-item .tag {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.4rem;
+    }
+    .summary-item p {
+      font-size: 0.9rem;
+      color: var(--text-dim);
+      line-height: 1.5;
+    }
+
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.6rem; }
+      .container { padding: 1.25rem 1rem 4rem; }
+      .summary-grid { grid-template-columns: 1fr; }
+      .nav { gap: 0.15rem; padding: 0.5rem; }
+      .nav-btn { padding: 0.4rem 0.75rem; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="hero">
+  <h1>Problem 1: Optimization & Probability</h1>
+  <p>CS221 Foundations — a step-by-step walkthrough with intuition, clean math, and lecture connections.</p>
+</div>
+
+<div class="nav">
+  <button class="nav-btn active" onclick="show('p1a')">1a · Quadratic</button>
+  <button class="nav-btn" onclick="show('p1b')">1b · Sum vs Max</button>
+  <button class="nav-btn" onclick="show('p1c')">1c · Dice Game</button>
+  <button class="nav-btn" onclick="show('p1d')">1d · Coin MLE</button>
+  <button class="nav-btn" onclick="show('p1e')">1e · Gradient</button>
+  <button class="nav-btn" onclick="show('summary')">Summary</button>
+</div>
+
+<div class="container">
+
+  <!-- ===================== 1a ===================== -->
+  <div id="p1a" class="problem active">
+    <h2 class="section-title">1a — Minimizing a Weighted Quadratic</h2>
+    <p class="section-subtitle">Find the point θ that minimizes a weighted sum of squared distances.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>You have positions \(x_1, \dots, x_n\) on a number line and positive importance weights \(w_1, \dots, w_n\). Minimize:</p>
+      <div class="math-line">
+        $$f(\theta) = \frac{1}{2} \sum_{i=1}^{n} w_i \,(\theta - x_i)^2$$
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🏘️ The "Loud Friends on a Street" Analogy</h3>
+      <p>Imagine \(n\) friends at positions \(x_1, \dots, x_n\). Each friend has a <span class="hl">"loudness"</span> \(w_i\) — the louder they are, the more they'll complain if you stand far away.</p>
+      <p>You want to stand at the spot \(\theta\) where <span class="hl-green">total complaining is minimized</span>. Naturally, you'd stand closer to the louder friends.</p>
+      <p>That's exactly a <strong>weighted average</strong>.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Take the derivative</strong> of \(f(\theta)\) with respect to \(\theta\).</p>
+          <div class="math-chain">
+            <div class="math-row">$$f'(\theta) = \frac{d}{d\theta}\left[\frac{1}{2}\sum_{i=1}^{n} w_i(\theta - x_i)^2\right]$$</div>
+            <div class="math-row">Using the chain rule on each term:</div>
+            <div class="math-row">$$f'(\theta) = \sum_{i=1}^{n} w_i\,(\theta - x_i)$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Set the derivative to zero</strong> and solve for \(\theta\).</p>
+          <div class="math-chain">
+            <div class="math-row">$$\sum_{i=1}^{n} w_i\,(\theta - x_i) = 0$$</div>
+            <div class="math-row">Expand:</div>
+            <div class="math-row">$$\theta \sum_{i=1}^{n} w_i \;-\; \sum_{i=1}^{n} w_i\, x_i = 0$$</div>
+            <div class="math-row">Rearrange:</div>
+            <div class="math-row">$$\theta \sum_{i=1}^{n} w_i = \sum_{i=1}^{n} w_i\, x_i$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Confirm it's a minimum.</strong> The second derivative is \(f''(\theta) = \sum w_i > 0\), so the function is convex (bowl-shaped). ✅</p>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$\theta^* = \frac{\displaystyle\sum_{i=1}^{n} w_i\, x_i}{\displaystyle\sum_{i=1}^{n} w_i} \qquad \text{(the weighted average!)}$$
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-label warning">What if some \(w_i\) are negative?</span>
+      <div class="emoji-point"><span class="em">⚠️</span><span>The second derivative \(\sum w_i\) could become ≤ 0. The "bowl" flips into a "hill" — the critical point becomes a <span class="hl-rose">maximum, not a minimum</span>.</span></div>
+      <div class="emoji-point"><span class="em">💥</span><span>If the total weight is negative, \(f(\theta) \to -\infty\) as \(|\theta| \to \infty\). <span class="hl-rose">No minimum exists.</span></span></div>
+    </div>
+  </div>
+
+  <!-- ===================== 1b ===================== -->
+  <div id="p1b" class="problem">
+    <h2 class="section-title">1b — Sum of Max vs. Max of Sum</h2>
+    <p class="section-subtitle">When you can optimize each piece individually vs. all at once, which is better?</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <div class="math-line">
+        $$f(\mathbf{x}) = \sum_{i=1}^{d} \max_{s \in \{1,-1\}} s\, x_i$$
+      </div>
+      <div class="math-line">
+        $$g(\mathbf{x}) = \max_{s \in \{1,-1\}} \sum_{i=1}^{d} s\, x_i$$
+      </div>
+      <p>Which is always true: \(f \leq g\), \(f = g\), or \(f \geq g\)?</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🍽️ The "Restaurant" Analogy</h3>
+      <div class="emoji-point"><span class="em">🅰️</span><span><strong>\(f\):</strong> Each person <span class="hl">picks their own favourite meal</span> independently. Everyone is happy.</span></div>
+      <div class="emoji-point"><span class="em">🅱️</span><span><strong>\(g\):</strong> The <span class="hl-rose">whole group must order the same meal</span>. Some people won't get their favourite.</span></div>
+      <p style="margin-top:0.5rem"><span class="hl-green">Individual choice is always at least as good as forced group choice!</span></p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Proof</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Simplify \(f\).</strong> For each coordinate, \(\max(x_i, -x_i) = |x_i|\).</p>
+          <div class="math-line">$$f(\mathbf{x}) = \sum_{i=1}^{d} |x_i|$$</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Simplify \(g\).</strong> One sign \(s\) for all coordinates:</p>
+          <div class="math-line">$$g(\mathbf{x}) = \max\!\left(\sum_{i} x_i,\; -\sum_{i} x_i\right) = \left|\sum_{i=1}^{d} x_i\right|$$</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Apply the Triangle Inequality:</strong></p>
+          <div class="math-line">
+            $$\left|\sum_{i=1}^{d} x_i\right| \;\leq\; \sum_{i=1}^{d} |x_i|$$
+          </div>
+          <p>This gives us \(g(\mathbf{x}) \leq f(\mathbf{x})\).</p>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$f(\mathbf{x}) \;\geq\; g(\mathbf{x}) \quad \text{for all } \mathbf{x}$$
+      </div>
+
+      <p style="margin-top:1rem"><strong>Example:</strong> \(\mathbf{x} = (3, -1)\) → \(f = |3| + |-1| = 4\), \(g = |3 + (-1)| = 2\). Indeed \(4 \geq 2\). ✓</p>
+    </div>
+  </div>
+
+  <!-- ===================== 1c ===================== -->
+  <div id="p1c" class="problem">
+    <h2 class="section-title">1c — Expected Points from a Dice Game</h2>
+    <p class="section-subtitle">A recurrence approach to compute expected value — the same idea behind MDPs.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>Roll a fair 6-sided die repeatedly until you roll a <strong>1</strong> (then stop).</p>
+      <ul>
+        <li>Roll a <strong>2</strong> → lose \(a\) points</li>
+        <li>Roll a <strong>6</strong> → win \(b\) points</li>
+        <li>Roll <strong>3, 4, 5</strong> → nothing happens</li>
+      </ul>
+      <p>What is the <span class="hl">expected total number of points</span> when you stop?</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Key Insight</span>
+      <p>Every time you haven't rolled a 1, the situation is <span class="hl">exactly the same</span> as when you started. So we can define:</p>
+      <div class="math-line">$$V = \text{expected total points from this point forward}$$</div>
+      <p>…and write a <span class="hl-green">self-referencing equation</span> (recurrence) for \(V\).</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Build the recurrence.</strong> On each roll:</p>
+          <table>
+            <thead>
+              <tr><th>Roll</th><th>Prob.</th><th>Points</th><th>Future</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>1</td><td>\(\frac{1}{6}\)</td><td>\(0\)</td><td>Stop</td></tr>
+              <tr><td>2</td><td>\(\frac{1}{6}\)</td><td>\(-a\)</td><td>Continue → add \(V\)</td></tr>
+              <tr><td>3</td><td>\(\frac{1}{6}\)</td><td>\(0\)</td><td>Continue → add \(V\)</td></tr>
+              <tr><td>4</td><td>\(\frac{1}{6}\)</td><td>\(0\)</td><td>Continue → add \(V\)</td></tr>
+              <tr><td>5</td><td>\(\frac{1}{6}\)</td><td>\(0\)</td><td>Continue → add \(V\)</td></tr>
+              <tr><td>6</td><td>\(\frac{1}{6}\)</td><td>\(+b\)</td><td>Continue → add \(V\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Write the equation:</strong></p>
+          <div class="math-chain">
+            <div class="math-row">$$V = \frac{1}{6}(0) + \frac{1}{6}(-a + V) + \frac{1}{6}(V) + \frac{1}{6}(V) + \frac{1}{6}(V) + \frac{1}{6}(b + V)$$</div>
+          </div>
+          <p>Simplify the right side:</p>
+          <div class="math-chain">
+            <div class="math-row">$$V = \frac{1}{6}\big(-a + b + 5V\big)$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Solve for \(V\):</strong></p>
+          <div class="math-chain">
+            <div class="math-row">$$6V = -a + b + 5V$$</div>
+            <div class="math-row">$$6V - 5V = b - a$$</div>
+            <div class="math-row">$$V = b - a$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$V = b - a$$
+      </div>
+
+      <p><strong>Sanity checks:</strong></p>
+      <div class="emoji-point"><span class="em">✅</span><span>\(a = 0, b = 0 \Rightarrow V = 0\). No points at stake — makes sense.</span></div>
+      <div class="emoji-point"><span class="em">✅</span><span>\(a = 0, b = 5 \Rightarrow V = 5\). Can only win — positive!</span></div>
+      <div class="emoji-point"><span class="em">✅</span><span>\(a = 3, b = 0 \Rightarrow V = -3\). Can only lose — negative.</span></div>
+    </div>
+
+    <div class="card">
+      <span class="card-label lecture">Lecture Connection</span>
+      <p>This recurrence is a <strong>Bellman equation</strong> in disguise — the same technique used in <span class="hl">Markov Decision Processes (MDPs)</span> that you'll study later in the Blackjack assignment. The value \(V\) here is like a "state value" — the expected future reward from the current state.</p>
+    </div>
+  </div>
+
+  <!-- ===================== 1d ===================== -->
+  <div id="p1d" class="problem">
+    <h2 class="section-title">1d — Maximum Likelihood for a Coin</h2>
+    <p class="section-subtitle">What's the most likely bias of a coin given observed flips?</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>A coin has probability \(p\) of heads. We flip it 7 times and observe: <strong>H, H, T, H, T, T, H</strong> (4 heads, 3 tails).</p>
+      <div class="math-line">$$L(p) = p^4\,(1-p)^3$$</div>
+      <p>Find the \(p\) that <span class="hl">maximizes</span> \(L(p)\).</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🔍 The Detective Analogy</h3>
+      <p>You're a detective. You see the evidence: 4 heads out of 7 flips. Your <strong>best guess</strong> for the coin's bias is simply the <span class="hl-green">fraction of heads you saw</span>:</p>
+      <div class="answer-box" style="font-size: 1.3rem;">$$p^* = \frac{4}{7} \approx 0.571$$</div>
+      <p>The math below proves this is exactly right.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Take the logarithm.</strong> Since \(\log\) is monotonically increasing, the \(p\) that maximizes \(\log L(p)\) also maximizes \(L(p)\). But logs are <em>much</em> easier to differentiate (products become sums).</p>
+          <div class="math-line">$$\log L(p) = 4\log p + 3\log(1-p)$$</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Differentiate</strong> with respect to \(p\):</p>
+          <div class="math-line">$$\frac{d}{dp}\log L(p) = \frac{4}{p} - \frac{3}{1-p}$$</div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Set the derivative to zero</strong> and solve:</p>
+          <div class="math-chain">
+            <div class="math-row">$$\frac{4}{p} \;=\; \frac{3}{1-p}$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem; padding-top:0.25rem;">Cross-multiply: multiply both sides by \(p(1-p)\):</div>
+            <div class="math-row">$$4\,(1-p) \;=\; 3\,p$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem; padding-top:0.25rem;">Expand the left side:</div>
+            <div class="math-row">$$4 - 4p \;=\; 3p$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem; padding-top:0.25rem;">Move all \(p\)-terms to the right:</div>
+            <div class="math-row">$$4 \;=\; 7p$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem; padding-top:0.25rem;">Divide both sides by 7:</div>
+            <div class="math-row">$$p^* \;=\; \frac{4}{7}$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$p^* = \frac{4}{7} = \frac{\text{number of heads}}{\text{total flips}}$$
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-label answer">Interpretation</span>
+      <p>This is the <strong>Maximum Likelihood Estimate (MLE)</strong>: the parameter value that makes the observed data <span class="hl-green">most probable</span>.</p>
+      <p>In general, for \(k\) heads in \(n\) flips:</p>
+      <div class="math-line">$$p_{\text{MLE}} = \frac{k}{n}$$</div>
+      <p>MLE simply says: your best estimate for the probability is the <strong>empirical frequency</strong>.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label lecture">Lecture Connection</span>
+      <p>MLE traces back to <strong>Ronald Fisher (1922)</strong>, as mentioned in <em>Lecture 1: Overview</em>. Nearly every learning algorithm in this course minimizes <strong>training loss</strong> — which is often the <em>negative log-likelihood</em>. So you just solved the simplest version of what gradient descent does in machine learning!</p>
+    </div>
+  </div>
+
+  <!-- ===================== 1e ===================== -->
+  <div id="p1e" class="problem">
+    <h2 class="section-title">1e — Computing a Gradient</h2>
+    <p class="section-subtitle">The core skill for training any machine learning model.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>For \(\mathbf{w} \in \mathbb{R}^d\), constants \(\mathbf{a}_i, \mathbf{b}_j \in \mathbb{R}^d\), and \(\lambda \in \mathbb{R}\):</p>
+      <div class="math-line">
+        $$f(\mathbf{w}) = \sum_{i=1}^{n}\sum_{j=1}^{n} (\mathbf{a}_i^\top \mathbf{w} - \mathbf{b}_j^\top \mathbf{w})^2 + \lambda\|\mathbf{w}\|_2^2$$
+      </div>
+      <p>Compute \(\nabla f(\mathbf{w})\).</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Why Gradients Matter</span>
+      <p>As taught in <em>Lecture 2</em>, to train a model we repeatedly do:</p>
+      <div class="math-line">$$\mathbf{w} \leftarrow \mathbf{w} - \eta\,\nabla f(\mathbf{w})$$</div>
+      <p>If you <span class="hl-rose">can't compute the gradient</span>, you <span class="hl-rose">can't train the model</span>. So let's master this!</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+      <h3>Strategy: Simplify → then Differentiate</h3>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Factor the inner expression.</strong></p>
+          <div class="math-chain">
+            <div class="math-row">$$\mathbf{a}_i^\top \mathbf{w} - \mathbf{b}_j^\top \mathbf{w} = (\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}$$</div>
+            <div class="math-row" style="color:var(--text-dim);">Let \(\mathbf{c}_{ij} = \mathbf{a}_i - \mathbf{b}_j\) for shorthand.</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Use the key identity</strong> (chain rule for squared dot products):</p>
+          <div class="math-line" style="border-left-color: var(--amber);">
+            $$\nabla_{\mathbf{w}} (\mathbf{c}^\top \mathbf{w})^2 = 2\,(\mathbf{c}^\top \mathbf{w})\;\mathbf{c}$$
+          </div>
+          <p style="color:var(--text-dim); font-size:0.9rem;"><em>Scalar version:</em> \(\frac{d}{dw}(cw)^2 = 2c^2 w = 2(cw) \cdot c\). Same idea!</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Apply to the double sum:</strong></p>
+          <div class="math-line">
+            $$\nabla_{\mathbf{w}}\sum_{i,j}(\mathbf{c}_{ij}^\top \mathbf{w})^2 = 2\sum_{i=1}^{n}\sum_{j=1}^{n} \big[(\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}\big]\;(\mathbf{a}_i - \mathbf{b}_j)$$
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <p><strong>Gradient of the regularization term:</strong></p>
+          <div class="math-chain">
+            <div class="math-row">$$\nabla_{\mathbf{w}}\;\lambda\|\mathbf{w}\|_2^2 = \nabla_{\mathbf{w}}\;\lambda\sum_{k=1}^{d}w_k^2 = 2\lambda\,\mathbf{w}$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">5</div>
+        <div class="step-content">
+          <p><strong>Combine:</strong></p>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$\nabla f(\mathbf{w}) = 2\sum_{i=1}^{n}\sum_{j=1}^{n}\big[(\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}\big](\mathbf{a}_i - \mathbf{b}_j) \;+\; 2\lambda\,\mathbf{w}$$
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-label answer">Scalar Sanity Check (d = 1)</span>
+      <p>When everything is a scalar (\(w, a_i, b_j \in \mathbb{R}\)):</p>
+      <div class="math-chain">
+        <div class="math-row">$$f(w) = \sum_{i,j}(a_i - b_j)^2 w^2 + \lambda w^2$$</div>
+        <div class="math-row">$$f'(w) = 2\sum_{i,j}(a_i - b_j)^2 w + 2\lambda w$$</div>
+      </div>
+      <p>Matches the vector answer when \(d = 1\). ✅</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label lecture">Lecture Connection</span>
+      <p>The \(\lambda\|\mathbf{w}\|^2\) term is called <strong>regularization</strong>. As discussed in Lecture 2 on SVMs, it prevents weights from growing too large — an implementation of <span class="hl">Occam's razor</span> (prefer simpler models). You'll see this in nearly every ML assignment in this course.</p>
+    </div>
+  </div>
+
+  <!-- ===================== Summary ===================== -->
+  <div id="summary" class="problem">
+    <h2 class="section-title">Summary — Key Takeaways</h2>
+    <p class="section-subtitle">The five core skills you've just learned and where they show up in CS221.</p>
+
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="tag" style="color:var(--accent);">1a · Quadratic</div>
+        <p>Minimizing quadratics → <strong>weighted average</strong>. Foundation of least-squares regression.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--green);">1b · Sum vs Max</div>
+        <p><strong>Individual ≥ group</strong> optimization (triangle inequality). Appears in bounds & relaxations.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--amber);">1c · Dice Game</div>
+        <p>Recurrence for expected value → <strong>Bellman equation</strong>. Core of MDPs & reinforcement learning.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--rose);">1d · Coin MLE</div>
+        <p><strong>MLE = empirical frequency</strong>. The foundation of probabilistic learning.</p>
+      </div>
+    </div>
+    <div class="summary-grid" style="grid-template-columns: 1fr; margin-top: 0;">
+      <div class="summary-item">
+        <div class="tag" style="color:var(--purple);">1e · Gradient</div>
+        <p><strong>Chain rule + regularization</strong> → the engine of gradient descent. You'll compute gradients like this in every ML assignment.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:1.5rem;">
+      <span class="card-label lecture">The Big Picture</span>
+      <h3>🧩 These aren't just homework problems — they're the building blocks of AI.</h3>
+      <table>
+        <thead>
+          <tr><th>Skill</th><th>Where It Reappears</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Weighted average (1a)</td><td>Squared loss minimization, regression</td></tr>
+          <tr><td>Max-sum ordering (1b)</td><td>CSP relaxations, variable elimination</td></tr>
+          <tr><td>Recurrences (1c)</td><td>MDP value iteration, Blackjack assignment</td></tr>
+          <tr><td>MLE (1d)</td><td>Bayesian networks, EM algorithm</td></tr>
+          <tr><td>Gradients (1e)</td><td>Every ML model: SGD, neural networks</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function show(id) {
+  document.querySelectorAll('.problem').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  event.currentTarget.classList.add('active');
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+
+</body>
+</html>
