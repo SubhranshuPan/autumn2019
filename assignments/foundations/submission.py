@@ -12,7 +12,7 @@ def findAlphabeticallyLastWord(text):
     You might find max() and list comprehensions handy here.
     """
     # BEGIN_YOUR_CODE (our solution is 1 line of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    return max(text.split())
     # END_YOUR_CODE
 
 ############################################################
@@ -24,7 +24,7 @@ def euclideanDistance(loc1, loc2):
     are pairs of numbers (e.g., (3, 5)).
     """
     # BEGIN_YOUR_CODE (our solution is 1 line of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    return math.sqrt((loc1[0] - loc2[0]) ** 2 + (loc1[1] - loc2[1]) ** 2)
     # END_YOUR_CODE
 
 ############################################################
@@ -50,7 +50,29 @@ def mutateSentences(sentence):
                 (reordered versions of this list are allowed)
     """
     # BEGIN_YOUR_CODE (our solution is 20 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    words = sentence.split()
+    if len(words) == 0:
+        return []
+    n = len(words)
+    # Build a map from each word to the set of words that can follow it
+    successors = collections.defaultdict(set)
+    for i in range(len(words) - 1):
+        successors[words[i]].add(words[i + 1])
+    # Use DFS to build all valid sentences of length n
+    results = set()
+    def dfs(path):
+        if len(path) == n:
+            results.add(' '.join(path))
+            return
+        last_word = path[-1]
+        for next_word in successors[last_word]:
+            path.append(next_word)
+            dfs(path)
+            path.pop()
+    # Start from every word that appears as the first word of some bigram
+    for word in set(words):
+        dfs([word])
+    return list(results)
     # END_YOUR_CODE
 
 ############################################################
@@ -64,7 +86,7 @@ def sparseVectorDotProduct(v1, v2):
     This function will be useful later for linear classifiers.
     """
     # BEGIN_YOUR_CODE (our solution is 4 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    return sum(v1[k] * v2[k] for k in v1 if k in v2)
     # END_YOUR_CODE
 
 ############################################################
@@ -76,7 +98,8 @@ def incrementSparseVector(v1, scale, v2):
     This function will be useful later for linear classifiers.
     """
     # BEGIN_YOUR_CODE (our solution is 2 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    for k in v2:
+        v1[k] += scale * v2[k]
     # END_YOUR_CODE
 
 ############################################################
@@ -89,7 +112,10 @@ def findSingletonWords(text):
     You might find it useful to use collections.defaultdict(int).
     """
     # BEGIN_YOUR_CODE (our solution is 4 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    counts = collections.defaultdict(int)
+    for word in text.split():
+        counts[word] += 1
+    return set(word for word, count in counts.items() if count == 1)
     # END_YOUR_CODE
 
 ############################################################
@@ -105,5 +131,21 @@ def computeLongestPalindromeLength(text):
     You should first define a recurrence before you start coding.
     """
     # BEGIN_YOUR_CODE (our solution is 19 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    n = len(text)
+    if n == 0:
+        return 0
+    # dp[i][j] = length of longest palindromic subsequence in text[i..j]
+    dp = [[0] * n for _ in range(n)]
+    # Base case: single characters are palindromes of length 1
+    for i in range(n):
+        dp[i][i] = 1
+    # Fill bottom-up by increasing length of substring
+    for length in range(2, n + 1):
+        for i in range(n - length + 1):
+            j = i + length - 1
+            if text[i] == text[j]:
+                dp[i][j] = dp[i + 1][j - 1] + 2
+            else:
+                dp[i][j] = max(dp[i + 1][j], dp[i][j - 1])
+    return dp[0][n - 1]
     # END_YOUR_CODE
