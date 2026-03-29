@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Problem 1: Optimization & Probability — Explained</title>
+  <title>CS221 Foundations — Problems 1 & 2 Explained</title>
   <script>
     MathJax = {
       tex: {
@@ -103,6 +103,17 @@
       gap: 0.25rem;
       padding: 0.75rem 1rem;
       flex-wrap: wrap;
+    }
+    .nav-sep {
+      width: 1px;
+      background: var(--border);
+      margin: 0.25rem 0.4rem;
+      align-self: stretch;
+    }
+    .nav-btn.p2.active {
+      background: rgba(74, 222, 128, 0.12);
+      color: var(--green);
+      border-color: rgba(74, 222, 128, 0.3);
     }
     .nav-btn {
       background: transparent;
@@ -337,8 +348,8 @@
 <body>
 
 <div class="hero">
-  <h1>Problem 1: Optimization & Probability</h1>
-  <p>CS221 Foundations — a step-by-step walkthrough with intuition, clean math, and lecture connections.</p>
+  <h1>CS221 Foundations — Problems 1 & 2</h1>
+  <p>Step-by-step walkthroughs with intuition, clean math, and lecture connections.</p>
 </div>
 
 <div class="nav">
@@ -347,6 +358,12 @@
   <button class="nav-btn" onclick="show('p1c')">1c · Dice Game</button>
   <button class="nav-btn" onclick="show('p1d')">1d · Coin MLE</button>
   <button class="nav-btn" onclick="show('p1e')">1e · Gradient</button>
+  <div class="nav-sep"></div>
+  <button class="nav-btn p2" onclick="show('p2a')">2a · Faces</button>
+  <button class="nav-btn p2" onclick="show('p2b')">2b · Grid DP</button>
+  <button class="nav-btn p2" onclick="show('p2c')">2c · Staircase</button>
+  <button class="nav-btn p2" onclick="show('p2d')">2d · Fast f(w)</button>
+  <div class="nav-sep"></div>
   <button class="nav-btn" onclick="show('summary')">Summary</button>
 </div>
 
@@ -742,33 +759,377 @@
     </div>
   </div>
 
+  <!-- ===================== 2a ===================== -->
+  <div id="p2a" class="problem">
+    <h2 class="section-title">2a — Counting Possible Faces</h2>
+    <p class="section-subtitle">How many ways can you place 6 rectangles on an image? A combinatorics warm-up.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>You have an \(n \times n\) pixel image. A "face" consists of <strong>6 axis-aligned rectangles</strong>: 2 eyes, 2 ears, 1 nose, 1 mouth. No constraints on location or size. How many possible faces are there?</p>
+      <p>Give your answer in the form \(O(n^c)\) or \(O(c^n)\).</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🖼️ The "Picking Edges" Approach</h3>
+      <p>To specify a rectangle on a grid, you need to choose <span class="hl">4 things</span>: where the left edge is, where the right edge is, where the top edge is, and where the bottom edge is.</p>
+      <p>Think of it like drawing a box: pick two vertical lines and two horizontal lines, and the box is determined.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Count ways to choose one rectangle.</strong></p>
+          <p>An axis-aligned rectangle is defined by 4 values:</p>
+          <ul>
+            <li>Left column: \(n\) choices (\(1\) to \(n\))</li>
+            <li>Right column: \(n\) choices (must be ≥ left, but for big-O we can ignore this — it's \(O(n)\))</li>
+            <li>Top row: \(n\) choices</li>
+            <li>Bottom row: \(n\) choices</li>
+          </ul>
+          <div class="math-line">
+            $$\text{Rectangles per image} = O(n) \times O(n) \times O(n) \times O(n) = O(n^4)$$
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Count the full face.</strong> A face has 6 independent rectangles. Each is chosen independently.</p>
+          <div class="math-line">
+            $$\text{Faces} = \underbrace{O(n^4)}_{\text{eye 1}} \times \underbrace{O(n^4)}_{\text{eye 2}} \times \underbrace{O(n^4)}_{\text{ear 1}} \times \underbrace{O(n^4)}_{\text{ear 2}} \times \underbrace{O(n^4)}_{\text{nose}} \times \underbrace{O(n^4)}_{\text{mouth}}$$
+          </div>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$O(n^{4 \times 6}) = O(n^{24})$$
+      </div>
+    </div>
+
+    <div class="card">
+      <span class="card-label answer">Why This Matters</span>
+      <p>Even though \(n^{24}\) sounds huge, it's <span class="hl-green">polynomial</span> in \(n\), not exponential. For a \(100 \times 100\) image, that's \(100^{24} = 10^{48}\) — still enormous, but the key insight is:</p>
+      <div class="emoji-point"><span class="em">📐</span><span>Each rectangle contributes \(O(n^4)\). Each part you add multiplies the exponent by another 4.</span></div>
+      <div class="emoji-point"><span class="em">🧮</span><span>If we had \(k\) parts instead of 6: \(O(n^{4k})\).</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== 2b ===================== -->
+  <div id="p2b" class="problem">
+    <h2 class="section-title">2b — Minimum Cost Path in a Grid</h2>
+    <p class="section-subtitle">A classic dynamic programming problem — the backbone of AI search.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>You have an \(n \times n\) grid. Start at \((1,1)\), reach \((n,n)\) by moving only <strong>down</strong> or <strong>right</strong>. Each cell \((i,j)\) has cost \(c(i,j)\) which can be negative. Find the path with <span class="hl">minimum total cost</span>.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🗺️ The "City Blocks" Analogy</h3>
+      <p>Imagine walking through a city grid from the top-left corner to the bottom-right. At each intersection you can only go <span class="hl">down or right</span>. Each block has a toll (which could be a reward if negative).</p>
+      <p>The key insight: to find the cheapest way to reach any intersection, you only need to know the cheapest way to reach the two intersections <span class="hl-green">immediately above and to the left</span> — because those are the only two ways to arrive.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Define the subproblem.</strong> Let \(d(i,j)\) = minimum cost to go from \((1,1)\) to \((i,j)\).</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Write the recurrence.</strong> To reach \((i,j)\), you must come from either above \((i-1,j)\) or left \((i,j-1)\):</p>
+          <div class="math-line">
+            $$d(i,j) = c(i,j) + \min\big(d(i-1,j),\; d(i,j-1)\big)$$
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Handle the base cases.</strong></p>
+          <div class="math-chain">
+            <div class="math-row">$$d(1,1) = c(1,1)$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem;">First row (can only come from the left):</div>
+            <div class="math-row">$$d(1,j) = c(1,j) + d(1,j-1) \quad \text{for } j > 1$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem;">First column (can only come from above):</div>
+            <div class="math-row">$$d(i,1) = c(i,1) + d(i-1,1) \quad \text{for } i > 1$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <p><strong>Fill the table.</strong> Process row by row, left to right. Each cell takes \(O(1)\) work (one comparison + one addition). There are \(n^2\) cells.</p>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$\text{Runtime: } O(n^2)$$
+      </div>
+
+      <p style="margin-top:1rem"><strong>Example (3×3):</strong></p>
+      <table>
+        <thead>
+          <tr><th></th><th>Col 1</th><th>Col 2</th><th>Col 3</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Row 1</strong></td><td>\(c(1,1)\)</td><td>→</td><td>→</td></tr>
+          <tr><td><strong>Row 2</strong></td><td>↓</td><td>\(\min(\text{↑, ←}) + c\)</td><td>→</td></tr>
+          <tr><td><strong>Row 3</strong></td><td>↓</td><td>↓</td><td>\(d(n,n) = \text{answer}\)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <span class="card-label lecture">Lecture Connection</span>
+      <p>This is exactly the type of <strong>dynamic programming</strong> discussed in the overview lecture. As Prof. Liang explains: DP = <span class="hl">recurrence + memoization</span>. The same pattern (define subproblems → write recurrence → fill bottom-up) will appear in the <em>text reconstruction</em> and <em>blackjack</em> assignments.</p>
+    </div>
+  </div>
+
+  <!-- ===================== 2c ===================== -->
+  <div id="p2c" class="problem">
+    <h2 class="section-title">2c — Ways to Climb a Staircase</h2>
+    <p class="section-subtitle">A counting problem with a beautiful pattern: powers of 2.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>A staircase has \(n\) steps. You start on the ground and can take <strong>any number of steps forward</strong> at a time (1, 2, 3, …, up to \(n\)), but you never step backwards. How many ways to reach the top?</p>
+      <p style="margin-top:0.5rem"><strong>Example:</strong> \(n = 3\) → answer is 4:</p>
+      <ol>
+        <li>1 + 1 + 1</li>
+        <li>2 + 1</li>
+        <li>1 + 2</li>
+        <li>3</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Intuition</span>
+      <h3>🪜 The "Checkpoint" Analogy</h3>
+      <p>Think of each intermediate step as a <span class="hl">checkpoint</span>. For steps 1 through \(n-1\), you have a binary choice: <span class="hl-green">stop here or skip it</span>. You must end on step \(n\).</p>
+      <p>Since there are \(n-1\) intermediate steps, each with 2 choices:</p>
+      <div class="math-line">$$\text{Ways} = \underbrace{2 \times 2 \times \cdots \times 2}_{n-1 \text{ choices}} = 2^{n-1}$$</div>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Proof</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Define the recurrence.</strong> Let \(f(k)\) = number of ways to reach step \(k\).</p>
+          <p>To reach step \(k\), you could take your last jump from step 0, 1, 2, …, or \(k-1\):</p>
+          <div class="math-line">$$f(k) = f(0) + f(1) + f(2) + \cdots + f(k-1)$$</div>
+          <p>Base case: \(f(0) = 1\) (one way to be at the ground: do nothing).</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Compute a few values:</strong></p>
+          <table>
+            <thead><tr><th>\(k\)</th><th>\(f(k)\)</th><th>Calculation</th></tr></thead>
+            <tbody>
+              <tr><td>0</td><td>1</td><td>Base case</td></tr>
+              <tr><td>1</td><td>1</td><td>\(f(0) = 1\)</td></tr>
+              <tr><td>2</td><td>2</td><td>\(f(0) + f(1) = 1 + 1\)</td></tr>
+              <tr><td>3</td><td>4</td><td>\(f(0) + f(1) + f(2) = 1 + 1 + 2\)</td></tr>
+              <tr><td>4</td><td>8</td><td>\(f(0) + f(1) + f(2) + f(3) = 1+1+2+4\)</td></tr>
+            </tbody>
+          </table>
+          <p>Pattern: \(1, 1, 2, 4, 8, 16, \dots\) → <span class="hl-green">doubles each time!</span></p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Prove the doubling.</strong> Notice:</p>
+          <div class="math-chain">
+            <div class="math-row">$$f(n) = f(0) + f(1) + \cdots + f(n-1)$$</div>
+            <div class="math-row">$$f(n-1) = f(0) + f(1) + \cdots + f(n-2)$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem;">Subtract the second from the first:</div>
+            <div class="math-row">$$f(n) - f(n-1) = f(n-1)$$</div>
+            <div class="math-row">$$f(n) = 2\,f(n-1)$$</div>
+          </div>
+          <p>Since \(f(1) = 1\), we get:</p>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        $$f(n) = 2^{n-1}$$
+      </div>
+
+      <p><strong>Sanity checks:</strong></p>
+      <div class="emoji-point"><span class="em">✅</span><span>\(n = 1\): \(2^0 = 1\). Only one way: take 1 step. ✓</span></div>
+      <div class="emoji-point"><span class="em">✅</span><span>\(n = 3\): \(2^2 = 4\). Matches the example. ✓</span></div>
+      <div class="emoji-point"><span class="em">✅</span><span>\(n = 4\): \(2^3 = 8\). (Enumerate them to verify!) ✓</span></div>
+    </div>
+  </div>
+
+  <!-- ===================== 2d ===================== -->
+  <div id="p2d" class="problem">
+    <h2 class="section-title">2d — Efficient Computation of f(w)</h2>
+    <p class="section-subtitle">Precompute once, evaluate fast — a classic machine learning trick.</p>
+
+    <div class="card">
+      <span class="card-label setup">Problem Setup</span>
+      <p>Recall the function from Problem 1e:</p>
+      <div class="math-line">
+        $$f(\mathbf{w}) = \sum_{i=1}^{n}\sum_{j=1}^{n} (\mathbf{a}_i^\top \mathbf{w} - \mathbf{b}_j^\top \mathbf{w})^2 + \lambda\|\mathbf{w}\|_2^2$$
+      </div>
+      <p>Naively, this takes \(O(n^2 d)\) time to evaluate (\(n^2\) pairs, each dot product costs \(O(d)\)). <strong>Goal:</strong></p>
+      <ul>
+        <li><strong>Preprocessing:</strong> \(O(nd^2)\) time</li>
+        <li><strong>Evaluate \(f(\mathbf{w})\):</strong> \(O(d^2)\) time for any given \(\mathbf{w}\)</li>
+      </ul>
+    </div>
+
+    <div class="card">
+      <span class="card-label intuition">Key Idea</span>
+      <h3>🧩 Separate what depends on w from what doesn't</h3>
+      <p>The vectors \(\mathbf{a}_i\) and \(\mathbf{b}_j\) are <span class="hl">fixed constants</span>. Only \(\mathbf{w}\) changes. If we can gather all the "data stuff" into one precomputed matrix, then evaluating \(f\) for any new \(\mathbf{w}\) becomes cheap.</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label solution">Step-by-Step Solution</span>
+
+      <div class="step">
+        <div class="step-num">1</div>
+        <div class="step-content">
+          <p><strong>Rewrite the function using vectors.</strong></p>
+          <p>Using \(\mathbf{a}_i^\top \mathbf{w} - \mathbf{b}_j^\top \mathbf{w} = (\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}\), each squared term becomes:</p>
+          <div class="math-chain">
+            <div class="math-row">$$\big[(\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}\big]^2 = \mathbf{w}^\top (\mathbf{a}_i - \mathbf{b}_j)(\mathbf{a}_i - \mathbf{b}_j)^\top \mathbf{w}$$</div>
+            <div class="math-row" style="color:var(--text-dim); font-size:0.92rem;">Using the identity: \((\mathbf{c}^\top \mathbf{w})^2 = \mathbf{w}^\top \mathbf{c}\mathbf{c}^\top \mathbf{w}\)</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">2</div>
+        <div class="step-content">
+          <p><strong>Factor out \(\mathbf{w}\).</strong> Summing over all \(i,j\):</p>
+          <div class="math-line">
+            $$f(\mathbf{w}) = \mathbf{w}^\top \underbrace{\left[\sum_{i=1}^n \sum_{j=1}^n (\mathbf{a}_i - \mathbf{b}_j)(\mathbf{a}_i - \mathbf{b}_j)^\top\right]}_{\mathbf{M} \;(d \times d \text{ matrix})} \mathbf{w} \;+\; \lambda\,\mathbf{w}^\top \mathbf{w}$$
+          </div>
+          <p>This simplifies to:</p>
+          <div class="math-line" style="border-left-color: var(--amber);">
+            $$f(\mathbf{w}) = \mathbf{w}^\top (\mathbf{M} + \lambda \mathbf{I})\, \mathbf{w}$$
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">3</div>
+        <div class="step-content">
+          <p><strong>Expand \(\mathbf{M}\) to make preprocessing efficient.</strong></p>
+          <p>Naively computing \(\mathbf{M}\) requires \(n^2\) outer products → \(O(n^2 d^2)\). But we can expand:</p>
+          <div class="math-chain">
+            <div class="math-row">$$(\mathbf{a}_i - \mathbf{b}_j)(\mathbf{a}_i - \mathbf{b}_j)^\top = \mathbf{a}_i\mathbf{a}_i^\top - \mathbf{a}_i\mathbf{b}_j^\top - \mathbf{b}_j\mathbf{a}_i^\top + \mathbf{b}_j\mathbf{b}_j^\top$$</div>
+          </div>
+          <p>Sum over \(i\) and \(j\):</p>
+          <div class="math-chain">
+            <div class="math-row">$$\mathbf{M} = \;n\sum_{i=1}^n \mathbf{a}_i\mathbf{a}_i^\top \;-\; \left(\sum_{i=1}^n \mathbf{a}_i\right)\!\left(\sum_{j=1}^n \mathbf{b}_j\right)^{\!\top} \;-\; \left(\sum_{j=1}^n \mathbf{b}_j\right)\!\left(\sum_{i=1}^n \mathbf{a}_i\right)^{\!\top} \;+\; n\sum_{j=1}^n \mathbf{b}_j\mathbf{b}_j^\top$$</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="step-num">4</div>
+        <div class="step-content">
+          <p><strong>Verify the cost.</strong></p>
+          <table>
+            <thead><tr><th>Operation</th><th>Cost</th></tr></thead>
+            <tbody>
+              <tr><td>\(\sum_i \mathbf{a}_i\mathbf{a}_i^\top\): \(n\) outer products of \(d\)-vectors</td><td>\(O(nd^2)\)</td></tr>
+              <tr><td>\(\sum_j \mathbf{b}_j\mathbf{b}_j^\top\): \(n\) outer products</td><td>\(O(nd^2)\)</td></tr>
+              <tr><td>\(\sum_i \mathbf{a}_i\) and \(\sum_j \mathbf{b}_j\): sum \(n\) vectors</td><td>\(O(nd)\)</td></tr>
+              <tr><td>Outer product of two \(d\)-vectors</td><td>\(O(d^2)\)</td></tr>
+              <tr><td>Combine into \(\mathbf{M}\): add \(d \times d\) matrices</td><td>\(O(d^2)\)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="answer-box">
+        <p style="margin-bottom:0.5rem"><strong>Preprocessing:</strong> Compute \(\mathbf{M}\) in \(O(nd^2)\) time ✅</p>
+        <p><strong>Evaluation:</strong> \(f(\mathbf{w}) = \mathbf{w}^\top (\mathbf{M} + \lambda\mathbf{I})\, \mathbf{w}\) in \(O(d^2)\) time ✅</p>
+      </div>
+
+      <p style="margin-top:0.75rem; color:var(--text-dim); font-size:0.92rem;"><strong>Why \(O(d^2)\)?</strong> Computing \(\mathbf{v} = (\mathbf{M} + \lambda\mathbf{I})\mathbf{w}\) is a \(d \times d\) matrix times \(d \times 1\) vector → \(O(d^2)\). Then \(\mathbf{w}^\top \mathbf{v}\) is a dot product → \(O(d)\). Total: \(O(d^2)\).</p>
+    </div>
+
+    <div class="card">
+      <span class="card-label lecture">Lecture Connection</span>
+      <p>This "precompute the kernel/Gram matrix" trick is ubiquitous in machine learning. By separating the <span class="hl">data-dependent part</span> (\(\mathbf{M}\)) from the <span class="hl">parameter-dependent part</span> (\(\mathbf{w}\)), you avoid redundant computation during training when \(\mathbf{w}\) changes every iteration but the data stays the same.</p>
+    </div>
+  </div>
+
   <!-- ===================== Summary ===================== -->
   <div id="summary" class="problem">
     <h2 class="section-title">Summary — Key Takeaways</h2>
-    <p class="section-subtitle">The five core skills you've just learned and where they show up in CS221.</p>
+    <p class="section-subtitle">All 9 core skills from Problems 1 & 2 and where they show up in CS221.</p>
 
+    <h3 style="margin-bottom: 0.75rem; color: var(--accent);">Problem 1: Optimization & Probability</h3>
     <div class="summary-grid">
       <div class="summary-item">
         <div class="tag" style="color:var(--accent);">1a · Quadratic</div>
         <p>Minimizing quadratics → <strong>weighted average</strong>. Foundation of least-squares regression.</p>
       </div>
       <div class="summary-item">
-        <div class="tag" style="color:var(--green);">1b · Sum vs Max</div>
+        <div class="tag" style="color:var(--accent);">1b · Sum vs Max</div>
         <p><strong>Individual ≥ group</strong> optimization (triangle inequality). Appears in bounds & relaxations.</p>
       </div>
       <div class="summary-item">
-        <div class="tag" style="color:var(--amber);">1c · Dice Game</div>
+        <div class="tag" style="color:var(--accent);">1c · Dice Game</div>
         <p>Recurrence for expected value → <strong>Bellman equation</strong>. Core of MDPs & reinforcement learning.</p>
       </div>
       <div class="summary-item">
-        <div class="tag" style="color:var(--rose);">1d · Coin MLE</div>
+        <div class="tag" style="color:var(--accent);">1d · Coin MLE</div>
         <p><strong>MLE = empirical frequency</strong>. The foundation of probabilistic learning.</p>
       </div>
     </div>
     <div class="summary-grid" style="grid-template-columns: 1fr; margin-top: 0;">
       <div class="summary-item">
-        <div class="tag" style="color:var(--purple);">1e · Gradient</div>
-        <p><strong>Chain rule + regularization</strong> → the engine of gradient descent. You'll compute gradients like this in every ML assignment.</p>
+        <div class="tag" style="color:var(--accent);">1e · Gradient</div>
+        <p><strong>Chain rule + regularization</strong> → the engine of gradient descent.</p>
+      </div>
+    </div>
+
+    <h3 style="margin: 1.5rem 0 0.75rem; color: var(--green);">Problem 2: Complexity</h3>
+    <div class="summary-grid">
+      <div class="summary-item">
+        <div class="tag" style="color:var(--green);">2a · Faces</div>
+        <p><strong>\(O(n^{24})\)</strong> — each rectangle is \(O(n^4)\), six parts multiply exponents.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--green);">2b · Grid DP</div>
+        <p><strong>\(O(n^2)\)</strong> via dynamic programming. Recurrence + table-filling.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--green);">2c · Staircase</div>
+        <p><strong>\(2^{n-1}\)</strong> ways — each intermediate step is a binary choice.</p>
+      </div>
+      <div class="summary-item">
+        <div class="tag" style="color:var(--green);">2d · Fast f(w)</div>
+        <p>Precompute \(\mathbf{M}\) in \(O(nd^2)\), then evaluate in \(O(d^2)\).</p>
       </div>
     </div>
 
@@ -785,6 +1146,10 @@
           <tr><td>Recurrences (1c)</td><td>MDP value iteration, Blackjack assignment</td></tr>
           <tr><td>MLE (1d)</td><td>Bayesian networks, EM algorithm</td></tr>
           <tr><td>Gradients (1e)</td><td>Every ML model: SGD, neural networks</td></tr>
+          <tr style="border-top: 2px solid var(--border);"><td>Combinatorics (2a)</td><td>State space counting, search complexity</td></tr>
+          <tr><td>Grid DP (2b)</td><td>Text reconstruction, sequence alignment</td></tr>
+          <tr><td>Counting (2c)</td><td>Enumerating solutions in CSPs</td></tr>
+          <tr><td>Matrix precomputation (2d)</td><td>Kernel methods, feature engineering</td></tr>
         </tbody>
       </table>
     </div>
