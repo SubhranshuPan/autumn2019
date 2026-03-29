@@ -1,0 +1,997 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem 1: Building Intuition — Explained</title>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --bg-card-hover: #1a2744;
+      --accent-blue: #4fc3f7;
+      --accent-purple: #b388ff;
+      --accent-green: #69f0ae;
+      --accent-orange: #ffab40;
+      --accent-red: #ff5252;
+      --accent-cyan: #84ffff;
+      --accent-pink: #f48fb1;
+      --text-primary: #e8eaf6;
+      --text-secondary: #9fa8da;
+      --text-muted: #7986cb;
+      --border-subtle: rgba(79, 195, 247, 0.15);
+      --glow-blue: rgba(79, 195, 247, 0.3);
+      --glow-purple: rgba(179, 136, 255, 0.3);
+      --glow-green: rgba(105, 240, 174, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.8;
+      font-size: 16px;
+      overflow-x: hidden;
+    }
+
+    /* Animated background */
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(79, 195, 247, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(179, 136, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(105, 240, 174, 0.03) 0%, transparent 50%);
+      z-index: -1;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      0% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 30px 80px;
+    }
+
+    /* Header */
+    .hero {
+      text-align: center;
+      padding: 60px 0 50px;
+      position: relative;
+    }
+
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(79,195,247,0.15), rgba(179,136,255,0.15));
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    /* Section titles */
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 50px 0 10px;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title .icon {
+      font-size: 1.5rem;
+    }
+
+    .section-subtitle {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 35px 0 10px;
+      color: var(--accent-purple);
+    }
+
+    .step-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 30px 0 10px;
+      color: var(--accent-orange);
+      border-left: 3px solid var(--accent-orange);
+      padding-left: 14px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px;
+      margin: 20px 0;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .card.concept {
+      border-left: 4px solid var(--accent-blue);
+      background: linear-gradient(135deg, rgba(79, 195, 247, 0.05), var(--bg-card));
+    }
+
+    .card.formula {
+      border-left: 4px solid var(--accent-purple);
+      background: linear-gradient(135deg, rgba(179, 136, 255, 0.05), var(--bg-card));
+      text-align: center;
+      padding: 32px 28px;
+    }
+
+    .card.intuition {
+      border-left: 4px solid var(--accent-green);
+      background: linear-gradient(135deg, rgba(105, 240, 174, 0.05), var(--bg-card));
+    }
+
+    .card.warning {
+      border-left: 4px solid var(--accent-red);
+      background: linear-gradient(135deg, rgba(255, 82, 82, 0.05), var(--bg-card));
+    }
+
+    .card.answer {
+      border-left: 4px solid var(--accent-cyan);
+      background: linear-gradient(135deg, rgba(132, 255, 255, 0.06), var(--bg-card));
+    }
+
+    .card.proof {
+      border-left: 4px solid var(--accent-pink);
+      background: linear-gradient(135deg, rgba(244, 143, 177, 0.05), var(--bg-card));
+    }
+
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .card.concept .card-label { color: var(--accent-blue); }
+    .card.formula .card-label { color: var(--accent-purple); }
+    .card.intuition .card-label { color: var(--accent-green); }
+    .card.warning .card-label { color: var(--accent-red); }
+    .card.answer .card-label { color: var(--accent-cyan); }
+    .card.proof .card-label { color: var(--accent-pink); }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 16px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    thead th {
+      background: rgba(79, 195, 247, 0.12);
+      color: var(--accent-blue);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.95rem;
+    }
+
+    tbody tr {
+      background: var(--bg-secondary);
+      transition: background 0.15s;
+    }
+
+    tbody tr:hover {
+      background: var(--bg-card-hover);
+    }
+
+    tbody tr:nth-child(even) {
+      background: rgba(26, 26, 46, 0.6);
+    }
+
+    tbody tr:nth-child(even):hover {
+      background: var(--bg-card-hover);
+    }
+
+    .positive { color: var(--accent-green); font-weight: 600; }
+    .negative { color: var(--accent-red); font-weight: 600; }
+    .zero { color: var(--text-muted); font-weight: 600; }
+    .highlight-word { color: var(--accent-orange); font-weight: 500; }
+    .math-accent { color: var(--accent-cyan); }
+
+    /* Paragraphs */
+    p {
+      color: var(--text-secondary);
+      margin: 12px 0;
+    }
+
+    strong {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* Step computation blocks */
+    .computation {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+    }
+
+    .computation .comp-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 6px 0;
+    }
+
+    .comp-label {
+      font-weight: 600;
+      color: var(--accent-blue);
+      min-width: 100px;
+      font-size: 0.9rem;
+    }
+
+    .comp-value {
+      color: var(--text-primary);
+    }
+
+    .comp-check {
+      margin-left: auto;
+      font-size: 1.1rem;
+    }
+
+    /* Divider */
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+      margin: 40px 0;
+    }
+
+    /* Summary boxes */
+    .final-answer {
+      background: linear-gradient(135deg, rgba(132, 255, 255, 0.08), rgba(79, 195, 247, 0.08));
+      border: 2px solid rgba(132, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 32px;
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .final-answer h3 {
+      color: var(--accent-cyan);
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+
+    /* Contradiciton highlight */
+    .contradiction {
+      font-size: 1.5rem;
+      color: var(--accent-red);
+      font-weight: 800;
+      text-align: center;
+      margin: 20px 0;
+      animation: shake 0.5s ease-in-out;
+    }
+
+    @keyframes shake {
+      0%, 100% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      75% { transform: translateX(5px); }
+    }
+
+    /* Lists */
+    ul, ol {
+      margin: 10px 0 10px 20px;
+      color: var(--text-secondary);
+    }
+
+    li {
+      margin: 6px 0;
+    }
+
+    /* Step connector */
+    .step-connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 24px 0;
+      gap: 12px;
+    }
+
+    .step-connector .line {
+      flex: 1;
+      height: 1px;
+      background: var(--border-subtle);
+    }
+
+    .step-connector .dot {
+      width: 10px;
+      height: 10px;
+      background: var(--accent-purple);
+      border-radius: 50%;
+      box-shadow: 0 0 10px var(--glow-purple);
+    }
+
+    /* Big picture section */
+    .takeaway {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      align-items: flex-start;
+    }
+
+    .takeaway .num {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: var(--bg-primary);
+      font-weight: 800;
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .takeaway .content {
+      flex: 1;
+    }
+
+    .takeaway .content strong {
+      color: var(--accent-blue);
+    }
+
+    /* TOC */
+    .toc {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin: 30px 0;
+    }
+
+    .toc h3 {
+      color: var(--accent-purple);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+
+    .toc a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: block;
+      padding: 6px 0;
+      transition: color 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .toc a:hover {
+      color: var(--accent-blue);
+    }
+
+    .toc a::before {
+      content: '→ ';
+      color: var(--accent-purple);
+      opacity: 0.5;
+    }
+
+    /* Responsive */
+    @media (max-width: 700px) {
+      .container { padding: 20px 16px 60px; }
+      .hero h1 { font-size: 1.8rem; }
+      .section-title { font-size: 1.4rem; }
+      table { font-size: 0.85rem; }
+      thead th, tbody td { padding: 10px 10px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Hero Header -->
+    <div class="hero">
+      <div class="badge">CS221 · Sentiment Analysis</div>
+      <h1>Problem 1: Building Intuition</h1>
+      <p class="subtitle">A step-by-step walkthrough of SGD with hinge loss and linear inseparability</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Contents</h3>
+      <a href="#background">Background: The Three Ingredients</a>
+      <a href="#part1a">Part 1a: SGD on Four Mini-Reviews</a>
+      <a href="#part1b">Part 1b: Proving Linear Inseparability</a>
+      <a href="#takeaways">Big Picture Takeaways</a>
+    </div>
+
+    <!-- ==================== BACKGROUND ==================== -->
+    <div id="background">
+      <h2 class="section-title"><span class="icon">🎯</span> Background: The Three Ingredients</h2>
+      <p>We want a machine to read a review and decide: <strong>positive (+1) or negative (−1)?</strong> The machinery has three parts (from Lecture 2: Machine Learning I):</p>
+
+      <div class="card concept">
+        <span class="card-label">Key Concepts</span>
+        <table>
+          <thead>
+            <tr><th>Concept</th><th>What It Is</th><th>Example</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Feature vector</strong> $\phi(x)$</td>
+              <td>Bag-of-words: count how many times each word appears</td>
+              <td>"pretty bad" → {pretty: 1, bad: 1}</td>
+            </tr>
+            <tr>
+              <td><strong>Weight vector</strong> $\mathbf{w}$</td>
+              <td>A number per word: "how positive is this word?"</td>
+              <td>{pretty: 0.3, bad: −0.8, …}</td>
+            </tr>
+            <tr>
+              <td><strong>Score</strong></td>
+              <td>Dot product $\mathbf{w} \cdot \phi(x)$</td>
+              <td>$0.3 \times 1 + (-0.8) \times 1 = -0.5$</td>
+            </tr>
+          </tbody>
+        </table>
+        <p>If the score is <span class="positive">positive → predict +1</span>. If <span class="negative">negative → predict −1</span>.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 1a ==================== -->
+    <div id="part1a">
+      <h2 class="section-title"><span class="icon">📝</span> Part 1a: SGD with Hinge Loss</h2>
+
+      <h3 class="section-subtitle">The Dataset</h3>
+      <table>
+        <thead>
+          <tr><th>#</th><th>Review</th><th>Label $y$</th><th>Feature vector $\phi(x)$</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>1</td><td>pretty bad</td><td class="negative">−1</td><td>{pretty: 1, bad: 1}</td></tr>
+          <tr><td>2</td><td>good plot</td><td class="positive">+1</td><td>{good: 1, plot: 1}</td></tr>
+          <tr><td>3</td><td>not good</td><td class="negative">−1</td><td>{not: 1, good: 1}</td></tr>
+          <tr><td>4</td><td>pretty scenery</td><td class="positive">+1</td><td>{pretty: 1, scenery: 1}</td></tr>
+        </tbody>
+      </table>
+
+      <!-- Hinge Loss Definition -->
+      <h3 class="section-subtitle">The Hinge Loss</h3>
+
+      <div class="card formula">
+        <span class="card-label">Definition</span>
+        $$\text{Loss}_{\text{hinge}}(x, y, \mathbf{w}) = \max\!\big\{0, \;\; 1 - \underbrace{(\mathbf{w} \cdot \phi(x)) \cdot y}_{\text{margin}}\big\}$$
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 What is the margin?</span>
+        <p>The <strong>margin</strong> = (score) × (true label) = $(\mathbf{w} \cdot \phi(x)) \cdot y$.</p>
+        <p>It measures <strong>"how confidently correct"</strong> the prediction is:</p>
+        <ul>
+          <li><strong>margin &gt; 1</strong> → Correct AND confident → Loss = 0 → No update ✅</li>
+          <li><strong>margin &lt; 1</strong> → Wrong OR not confident enough → Loss &gt; 0 → Need to update ⚠️</li>
+          <li><strong>margin = 1</strong> → Exactly on boundary → Problem says gradient = 0 (no update)</li>
+        </ul>
+      </div>
+
+      <!-- Gradient -->
+      <h3 class="section-subtitle">The Gradient &amp; Update Rule</h3>
+
+      <div class="card formula">
+        <span class="card-label">Gradient of Hinge Loss</span>
+        $$\nabla_{\mathbf{w}} \text{Loss}_{\text{hinge}} = \begin{cases} -\phi(x) \cdot y & \text{if margin} < 1 \\[6pt] \mathbf{0} & \text{if margin} \geq 1 \end{cases}$$
+      </div>
+
+      <p>The SGD update rule says: <strong>subtract</strong> the gradient (scaled by step size $\eta$).</p>
+
+      <div class="card formula">
+        <span class="card-label">SGD Update</span>
+        $$\mathbf{w} \;\leftarrow\; \mathbf{w} \;-\; \eta \cdot \nabla_{\mathbf{w}} \text{Loss}_{\text{hinge}}$$
+      </div>
+
+      <p>When margin &lt; 1 (the case where we actually update), substituting the gradient in:</p>
+
+      <div class="card formula">
+        <span class="card-label">Update (when margin &lt; 1)</span>
+        $$\mathbf{w} \;\leftarrow\; \mathbf{w} \;-\; \eta \cdot \big(-\phi(x) \cdot y\big)$$
+        <p style="margin-top: 12px; color: var(--text-muted);">The two negatives cancel, giving us:</p>
+        $$\boxed{\;\mathbf{w} \;\leftarrow\; \mathbf{w} \;+\; \eta \cdot \phi(x) \cdot y\;}$$
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 What does this mean in plain English?</span>
+        <p>When we need to update, for <strong>each word in the review</strong>:</p>
+        <ul>
+          <li>If the review is <span class="positive">positive</span> ($y = +1$): <strong>increase</strong> that word's weight by $\eta$</li>
+          <li>If the review is <span class="negative">negative</span> ($y = -1$): <strong>decrease</strong> that word's weight by $\eta$</li>
+        </ul>
+        <p>Words <em>not</em> in the review are untouched. With $\eta = 0.5$, each update nudges by $\pm 0.5$.</p>
+      </div>
+
+      <!-- STEP BY STEP -->
+      <h3 class="section-subtitle">Step-by-Step Computation</h3>
+      <p>We track six word weights: <span class="highlight-word">pretty</span>, <span class="highlight-word">good</span>, <span class="highlight-word">bad</span>, <span class="highlight-word">plot</span>, <span class="highlight-word">not</span>, <span class="highlight-word">scenery</span>. All start at <span class="zero">0</span>.</p>
+
+      <!-- Step 1 -->
+      <h3 class="step-title">Step 1 — "pretty bad", &nbsp; $y = -1$</h3>
+
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">Features:</span>
+          <span class="comp-value">$\phi(x) = \{\text{pretty}: 1, \; \text{bad}: 1\}$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Score:</span>
+          <span class="comp-value">$\mathbf{w} \cdot \phi(x) = 0 \times 1 + 0 \times 1 = 0$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Margin:</span>
+          <span class="comp-value">$\text{score} \times y = 0 \times (-1) = 0$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Is margin &lt; 1?</span>
+          <span class="comp-value"><strong>YES</strong> ($0 < 1$) → Update!</span>
+          <span class="comp-check">⚠️</span>
+        </div>
+      </div>
+
+      <p>Apply the update &nbsp;$\mathbf{w} \leftarrow \mathbf{w} + 0.5 \cdot \phi(x) \cdot y$&nbsp; (with $y = -1$, this <em>subtracts</em> 0.5 from each word in the review):</p>
+
+      <table>
+        <thead><tr><th>Word</th><th>Old $w$</th><th>In review?</th><th>Update</th><th>New $w$</th></tr></thead>
+        <tbody>
+          <tr><td class="highlight-word">pretty</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (-1) = -0.5$</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">bad</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (-1) = -0.5$</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">good</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">plot</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">not</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">scenery</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>"pretty" and "bad" appeared in a <span class="negative">negative</span> review, so their weights go <span class="negative">down</span>. The classifier is learning: <em>"these words are associated with negativity."</em></p>
+      </div>
+
+      <div class="step-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+
+      <!-- Step 2 -->
+      <h3 class="step-title">Step 2 — "good plot", &nbsp; $y = +1$</h3>
+
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">Features:</span>
+          <span class="comp-value">$\phi(x) = \{\text{good}: 1, \; \text{plot}: 1\}$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Score:</span>
+          <span class="comp-value">$\mathbf{w} \cdot \phi(x) = 0 \times 1 + 0 \times 1 = 0$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Margin:</span>
+          <span class="comp-value">$0 \times (+1) = 0$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Is margin &lt; 1?</span>
+          <span class="comp-value"><strong>YES</strong> ($0 < 1$) → Update!</span>
+          <span class="comp-check">⚠️</span>
+        </div>
+      </div>
+
+      <p>Apply the update with $y = +1$ (this <em>adds</em> 0.5 to each word in the review):</p>
+
+      <table>
+        <thead><tr><th>Word</th><th>Old $w$</th><th>In review?</th><th>Update</th><th>New $w$</th></tr></thead>
+        <tbody>
+          <tr><td class="highlight-word">pretty</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">bad</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">good</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (+1) = +0.5$</td><td class="positive">+0.5</td></tr>
+          <tr><td class="highlight-word">plot</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (+1) = +0.5$</td><td class="positive">+0.5</td></tr>
+          <tr><td class="highlight-word">not</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">scenery</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>"good" and "plot" appeared in a <span class="positive">positive</span> review, so their weights go <span class="positive">up</span>. The classifier is learning positivity.</p>
+      </div>
+
+      <div class="step-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+
+      <!-- Step 3 -->
+      <h3 class="step-title">Step 3 — "not good", &nbsp; $y = -1$</h3>
+
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">Features:</span>
+          <span class="comp-value">$\phi(x) = \{\text{not}: 1, \; \text{good}: 1\}$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Score:</span>
+          <span class="comp-value">$\mathbf{w} \cdot \phi(x) = 0 \times 1 + 0.5 \times 1 = 0.5$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Margin:</span>
+          <span class="comp-value">$0.5 \times (-1) = -0.5$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Is margin &lt; 1?</span>
+          <span class="comp-value"><strong>YES</strong> ($-0.5 < 1$) → Update!</span>
+          <span class="comp-check">⚠️</span>
+        </div>
+      </div>
+
+      <p>Apply the update with $y = -1$:</p>
+
+      <table>
+        <thead><tr><th>Word</th><th>Old $w$</th><th>In review?</th><th>Update</th><th>New $w$</th></tr></thead>
+        <tbody>
+          <tr><td class="highlight-word">pretty</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">bad</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">good</td><td class="positive">+0.5</td><td>✅</td><td>$+\;0.5 \times 1 \times (-1) = -0.5$</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">plot</td><td class="positive">+0.5</td><td>❌</td><td>—</td><td class="positive">+0.5</td></tr>
+          <tr><td class="highlight-word">not</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (-1) = -0.5$</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">scenery</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>"not good" is <span class="negative">negative</span>, so "not" gets a negative weight. And "good"? It got pulled <em>back down</em> — it was boosted by "good plot" but now dragged down by "not good." The classifier is correcting itself!</p>
+      </div>
+
+      <div class="step-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+
+      <!-- Step 4 -->
+      <h3 class="step-title">Step 4 — "pretty scenery", &nbsp; $y = +1$</h3>
+
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">Features:</span>
+          <span class="comp-value">$\phi(x) = \{\text{pretty}: 1, \; \text{scenery}: 1\}$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Score:</span>
+          <span class="comp-value">$\mathbf{w} \cdot \phi(x) = (-0.5) \times 1 + 0 \times 1 = -0.5$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Margin:</span>
+          <span class="comp-value">$(-0.5) \times (+1) = -0.5$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">Is margin &lt; 1?</span>
+          <span class="comp-value"><strong>YES</strong> ($-0.5 < 1$) → Update!</span>
+          <span class="comp-check">⚠️</span>
+        </div>
+      </div>
+
+      <p>Apply the update with $y = +1$:</p>
+
+      <table>
+        <thead><tr><th>Word</th><th>Old $w$</th><th>In review?</th><th>Update</th><th>New $w$</th></tr></thead>
+        <tbody>
+          <tr><td class="highlight-word">pretty</td><td class="negative">−0.5</td><td>✅</td><td>$+\;0.5 \times 1 \times (+1) = +0.5$</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">bad</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">good</td><td class="zero">0</td><td>❌</td><td>—</td><td class="zero">0</td></tr>
+          <tr><td class="highlight-word">plot</td><td class="positive">+0.5</td><td>❌</td><td>—</td><td class="positive">+0.5</td></tr>
+          <tr><td class="highlight-word">not</td><td class="negative">−0.5</td><td>❌</td><td>—</td><td class="negative">−0.5</td></tr>
+          <tr><td class="highlight-word">scenery</td><td class="zero">0</td><td>✅</td><td>$+\;0.5 \times 1 \times (+1) = +0.5$</td><td class="positive">+0.5</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>"pretty scenery" is <span class="positive">positive</span>, so "pretty" gets pulled <span class="positive">back up</span> (it was dragged down by "pretty bad") and "scenery" gets a positive weight. Words that appear in conflicting contexts get weights closer to zero!</p>
+      </div>
+
+      <!-- FINAL ANSWER 1a -->
+      <div class="final-answer">
+        <h3>✅ Final Answer — Part 1a</h3>
+        <table>
+          <thead><tr><th>Word</th><th>Final Weight</th><th>Interpretation</th></tr></thead>
+          <tbody>
+            <tr><td class="highlight-word">pretty</td><td class="zero">0</td><td>Appeared in both +1 and −1 reviews → ambiguous</td></tr>
+            <tr><td class="highlight-word">good</td><td class="zero">0</td><td>Appeared in both +1 and −1 reviews → ambiguous</td></tr>
+            <tr><td class="highlight-word">bad</td><td class="negative">−0.5</td><td>Only appeared in negative review → negative indicator</td></tr>
+            <tr><td class="highlight-word">plot</td><td class="positive">+0.5</td><td>Only appeared in positive review → positive indicator</td></tr>
+            <tr><td class="highlight-word">not</td><td class="negative">−0.5</td><td>Only appeared in negative review → negative indicator</td></tr>
+            <tr><td class="highlight-word">scenery</td><td class="positive">+0.5</td><td>Only appeared in positive review → positive indicator</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 A beautiful pattern emerges</span>
+        <p><strong>"pretty" and "good" land at zero</strong> because they appeared in both positive and negative contexts — the classifier correctly identifies them as <em>ambiguous</em>.</p>
+        <p><strong>"bad" and "not"</strong> are reliably negative indicators (weight = −0.5).</p>
+        <p><strong>"plot" and "scenery"</strong> are reliably positive indicators (weight = +0.5).</p>
+        <p>The classifier figured all this out in <strong>just one pass</strong> through the data!</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 1b ==================== -->
+    <div id="part1b">
+      <h2 class="section-title"><span class="icon">🔒</span> Part 1b: Proving Linear Inseparability</h2>
+
+      <h3 class="section-subtitle">The Task</h3>
+      <p>Create 4 mini-reviews using only <strong>"not", "good", "bad"</strong> with intuitive labels, then <strong>prove</strong> that no linear classifier can achieve zero error. Finally, propose a fix.</p>
+
+      <h3 class="section-subtitle">The Dataset</h3>
+      <table>
+        <thead><tr><th>#</th><th>Review</th><th>Label $y$</th><th>Feature vector $\phi(x)$</th></tr></thead>
+        <tbody>
+          <tr><td>1</td><td>good</td><td class="positive">+1</td><td>{good: 1}</td></tr>
+          <tr><td>2</td><td>bad</td><td class="negative">−1</td><td>{bad: 1}</td></tr>
+          <tr><td>3</td><td>not good</td><td class="negative">−1</td><td>{not: 1, good: 1}</td></tr>
+          <tr><td>4</td><td>not bad</td><td class="positive">+1</td><td>{not: 1, bad: 1}</td></tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why these labels make sense</span>
+        <ul>
+          <li>"good" → obviously positive ✅</li>
+          <li>"bad" → obviously negative ❌</li>
+          <li>"not good" → negated positive → negative ❌</li>
+          <li>"not bad" → negated negative → positive ✅</li>
+        </ul>
+      </div>
+
+      <!-- The Proof -->
+      <h3 class="section-subtitle">The Proof</h3>
+
+      <div class="card warning">
+        <span class="card-label">⚠️ Important</span>
+        <p>This proof is about <strong>any</strong> linear classifier — not about SGD or any specific algorithm. No matter how the weights are chosen (by hand, by training, by magic), it's impossible to get zero error.</p>
+      </div>
+
+      <div class="card proof">
+        <span class="card-label">Proof by Contradiction</span>
+
+        <p>A linear classifier predicts $\text{sign}(\mathbf{w} \cdot \phi(x))$. Let the weights be $w_{\text{good}}$, $w_{\text{bad}}$, $w_{\text{not}}$.</p>
+
+        <p>For <strong>zero error</strong>, we need all four score-times-label products to be positive (correct predictions). Writing out the four requirements:</p>
+
+        <table>
+          <thead><tr><th>Review</th><th>Required</th><th>Inequality</th><th>Label</th></tr></thead>
+          <tbody>
+            <tr>
+              <td>"good" → +1</td>
+              <td>$\mathbf{w} \cdot \phi > 0$</td>
+              <td>$w_{\text{good}} > 0$</td>
+              <td>(i)</td>
+            </tr>
+            <tr>
+              <td>"bad" → −1</td>
+              <td>$\mathbf{w} \cdot \phi < 0$</td>
+              <td>$w_{\text{bad}} < 0$</td>
+              <td>(ii)</td>
+            </tr>
+            <tr>
+              <td>"not good" → −1</td>
+              <td>$\mathbf{w} \cdot \phi < 0$</td>
+              <td>$w_{\text{not}} + w_{\text{good}} < 0$</td>
+              <td>(iii)</td>
+            </tr>
+            <tr>
+              <td>"not bad" → +1</td>
+              <td>$\mathbf{w} \cdot \phi > 0$</td>
+              <td>$w_{\text{not}} + w_{\text{bad}} > 0$</td>
+              <td>(iv)</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p style="margin-top: 20px;"><strong>Now we derive the contradiction in three steps:</strong></p>
+
+        <p><strong>From (iii):</strong> &nbsp; $w_{\text{not}} + w_{\text{good}} < 0$ &nbsp;⟹&nbsp; $w_{\text{not}} < -w_{\text{good}}$</p>
+
+        <p><strong>From (iv):</strong> &nbsp; $w_{\text{not}} + w_{\text{bad}} > 0$ &nbsp;⟹&nbsp; $w_{\text{not}} > -w_{\text{bad}}$</p>
+
+        <p><strong>Combining:</strong> &nbsp; $-w_{\text{bad}} < w_{\text{not}} < -w_{\text{good}}$</p>
+
+        <p>This requires &nbsp;$-w_{\text{bad}} < -w_{\text{good}}$, &nbsp;which means &nbsp;$w_{\text{good}} < w_{\text{bad}}$.</p>
+
+        <p><strong>But from (i) and (ii)</strong>: &nbsp;$w_{\text{good}} > 0$ and $w_{\text{bad}} < 0$, so $w_{\text{good}} > 0 > w_{\text{bad}}$, which means $w_{\text{good}} > w_{\text{bad}}$.</p>
+
+      </div>
+
+      <p class="contradiction">❌ CONTRADICTION! &nbsp; $w_{\text{good}} < w_{\text{bad}}$ &nbsp;AND&nbsp; $w_{\text{good}} > w_{\text{bad}}$ &nbsp;cannot both be true.</p>
+
+      <p style="text-align: center; color: var(--text-primary); font-weight: 600; font-size: 1.1rem;">Therefore, no assignment of weights can satisfy all four constraints.&emsp;∎</p>
+
+      <!-- Why? -->
+      <h3 class="section-subtitle">Why Does This Happen?</h3>
+
+      <div class="card concept">
+        <span class="card-label">The Core Issue</span>
+        <p>In a linear classifier, every word contributes <strong>independently</strong> to the score:</p>
+        <p style="text-align: center; margin: 16px 0;">
+          $\text{score} = w_{\text{not}} \times \phi_{\text{not}} + w_{\text{good}} \times \phi_{\text{good}} + w_{\text{bad}} \times \phi_{\text{bad}}$
+        </p>
+        <p>The word "not" adds a <strong>fixed amount</strong> ($w_{\text{not}}$) no matter what word follows it. But we need:</p>
+        <ul>
+          <li>"not" to push the score <span class="negative">DOWN</span> when paired with "good"</li>
+          <li>"not" to push the score <span class="positive">UP</span> when paired with "bad"</li>
+        </ul>
+        <p>A single weight $w_{\text{not}}$ can't do both! This is essentially an <strong>XOR problem</strong> — and linear classifiers can't solve XOR.</p>
+      </div>
+
+      <!-- The Fix -->
+      <h3 class="section-subtitle">The Fix: Add a Bigram Feature</h3>
+
+      <div class="card answer">
+        <span class="card-label">✨ Proposed Feature</span>
+        <p>Add a <strong>"not good" bigram feature</strong> — a feature that fires only when the two consecutive words "not" and "good" appear together.</p>
+      </div>
+
+      <p>The updated feature vectors become:</p>
+
+      <table>
+        <thead><tr><th>Review</th><th>Updated $\phi(x)$</th></tr></thead>
+        <tbody>
+          <tr><td>good</td><td>{good: 1}</td></tr>
+          <tr><td>bad</td><td>{bad: 1}</td></tr>
+          <tr><td>not good</td><td>{not: 1, good: 1, <span class="positive">not_good: 1</span>}</td></tr>
+          <tr><td>not bad</td><td>{not: 1, bad: 1}</td></tr>
+        </tbody>
+      </table>
+
+      <p>Now let's verify it works. Set weights: $w_{\text{good}} = 1,\; w_{\text{bad}} = -1,\; w_{\text{not}} = 2,\; w_{\text{not\_good}} = -4$</p>
+
+      <table>
+        <thead><tr><th>Review</th><th>Score computation</th><th>Score</th><th>Prediction</th><th>Correct?</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>good</td>
+            <td>$1$</td>
+            <td class="positive">1</td>
+            <td class="positive">+1</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td>bad</td>
+            <td>$-1$</td>
+            <td class="negative">−1</td>
+            <td class="negative">−1</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td>not good</td>
+            <td>$2 + 1 + (-4) = -1$</td>
+            <td class="negative">−1</td>
+            <td class="negative">−1</td>
+            <td>✅</td>
+          </tr>
+          <tr>
+            <td>not bad</td>
+            <td>$2 + (-1) = 1$</td>
+            <td class="positive">1</td>
+            <td class="positive">+1</td>
+            <td>✅</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why does this work?</span>
+        <p>The bigram feature "not_good" gives the classifier a special knob that activates <strong>only</strong> when "not" and "good" appear together. Its large negative weight ($-4$) can overwhelm the individual effects of "not" (+2) and "good" (+1), correctly flipping the prediction to negative.</p>
+        <p>Meanwhile, "not bad" doesn't trigger the "not_good" feature, so it just gets the sum of "not" (+2) and "bad" (−1) = +1, correctly positive.</p>
+        <p>This is exactly the idea behind <strong>n-gram features</strong> — you'll implement this in Problem 3e (<code>extractCharacterFeatures</code>)!</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== TAKEAWAYS ==================== -->
+    <div id="takeaways">
+      <h2 class="section-title"><span class="icon">🧠</span> Big Picture Takeaways</h2>
+
+      <div class="takeaway">
+        <div class="num">1</div>
+        <div class="content">
+          <p><strong>SGD processes examples one at a time</strong> and nudges weights in the right direction. Each update only looks at one example — it's fast but noisy. Over many examples, the noise averages out and you get good weights.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">2</div>
+        <div class="content">
+          <p><strong>Hinge loss is smarter than 0-1 loss.</strong> It doesn't just penalize mistakes — it also penalizes being "right but not confident" (margin &lt; 1). This extra push toward confident predictions is what makes SVMs so effective.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">3</div>
+        <div class="content">
+          <p><strong>Linear classifiers have fundamental limits.</strong> They can only draw a single hyperplane to separate positive from negative. When the truth requires considering <em>interactions between words</em> (like "not" flipping "good"), bag-of-words features fail. This is why <strong>feature engineering</strong> (bigrams, n-grams) or <strong>non-linear models</strong> (neural networks) matter.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">4</div>
+        <div class="content">
+          <p><strong>Feature engineering = giving the model the right "vocabulary."</strong> Unigrams (single words) can't capture negation. Bigrams ("not good") can. This exact idea appears again in Problem 3e, where character n-grams capture sub-word patterns that word features miss.</p>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+</body>
+</html>
