@@ -1,5 +1,22 @@
 <head>
   <meta charset="UTF-8">
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #ffffff;
+      overflow: hidden;
+    }
+  </style>
+  <script>
+    // Auto-activate fullscreen mode if no mode is specified
+    (function() {
+      var hash = window.location.hash;
+      if (hash.indexOf('mode=') === -1 && hash.indexOf('include=') !== -1) {
+        window.location.hash = hash + '&mode=fullScreen';
+      }
+    })();
+  </script>
   <script src="../sfig/internal/sfig.js"></script>
   <script src="../sfig/internal/seedrandom.js"></script>
   <script src="../sfig/internal/Graph.js"></script>
@@ -11,3 +28,4 @@
 
 <body onload="prez.run()">
 </body>
+
