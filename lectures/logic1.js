@@ -356,7 +356,7 @@ prose(
 _);
 
 add(slide('Syntax of propositional logic',
-  headerList('Propositional symbols (atomic formulas): $A, B, C$'), pause(),
+  headerList('Propositional symbols (atomic formulas): $A, B$, C$'), pause(),
   stmt('Logical connectives', '$\\neg, \\wedge, \\vee, \\to, \\leftrightarrow$'), pause(),
   headerList('Build up formulas recursively&mdash;if $f$ and $g$ are formulas, so are the following',
     'Negation: $\\neg f$',
