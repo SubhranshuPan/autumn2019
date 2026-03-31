@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Problem 1: Building Intuition — Explained</title>
+  <title>Sentiment Analysis — Problems 1 & 2 Explained</title>
   <script>
     MathJax = {
       tex: {
@@ -461,8 +461,8 @@
     <!-- Hero Header -->
     <div class="hero">
       <div class="badge">CS221 · Sentiment Analysis</div>
-      <h1>Problem 1: Building Intuition</h1>
-      <p class="subtitle">A step-by-step walkthrough of SGD with hinge loss and linear inseparability</p>
+      <h1>Problems 1 & 2: Explained</h1>
+      <p class="subtitle">Building intuition with SGD, hinge loss, and predicting movie ratings with logistic regression</p>
     </div>
 
     <!-- Table of Contents -->
@@ -471,7 +471,14 @@
       <a href="#background">Background: The Three Ingredients</a>
       <a href="#part1a">Part 1a: SGD on Four Mini-Reviews</a>
       <a href="#part1b">Part 1b: Proving Linear Inseparability</a>
-      <a href="#takeaways">Big Picture Takeaways</a>
+      <a href="#takeaways">Problem 1 — Big Picture Takeaways</a>
+      <a href="#problem2">Problem 2: Predicting Movie Ratings</a>
+      <a href="#part2a">Part 2a: The Loss Function</a>
+      <a href="#part2b">Part 2b: The Gradient</a>
+      <a href="#part2c">Part 2c: Vanishing Gradients</a>
+      <a href="#part2d">Part 2d: Maximum Gradient Magnitude</a>
+      <a href="#part2e">Part 2e: Transforming to Linear Regression</a>
+      <a href="#takeaways2">Problem 2 — Big Picture Takeaways</a>
     </div>
 
     <!-- ==================== BACKGROUND ==================== -->
@@ -987,6 +994,369 @@
         <div class="num">4</div>
         <div class="content">
           <p><strong>Feature engineering = giving the model the right "vocabulary."</strong> Unigrams (single words) can't capture negation. Bigrams ("not good") can. This exact idea appears again in Problem 3e, where character n-grams capture sub-word patterns that word features miss.</p>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ====================================================================== -->
+    <!-- ==================== PROBLEM 2: PREDICTING MOVIE RATINGS ============= -->
+    <!-- ====================================================================== -->
+
+    <div id="problem2">
+      <h2 class="section-title" style="font-size: 2rem;"><span class="icon">🎬</span> Problem 2: Predicting Movie Ratings</h2>
+      <p>Now we shift gears. Instead of classifying reviews as positive/negative, we want to <strong>predict a numeric rating</strong> between 0 and 1. This introduces a non-linear predictor and the squared loss.</p>
+
+      <div class="card concept">
+        <span class="card-label">Setup</span>
+        <table>
+          <thead>
+            <tr><th>Component</th><th>What It Is</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Predictor</strong></td>
+              <td>$\sigma(\mathbf{w} \cdot \phi(x))$ — the logistic (sigmoid) function applied to the score</td>
+            </tr>
+            <tr>
+              <td><strong>Logistic function</strong></td>
+              <td>$\sigma(z) = \dfrac{1}{1 + e^{-z}}$ — squashes any real number into the range $(0, 1)$</td>
+            </tr>
+            <tr>
+              <td><strong>Rating</strong> $y$</td>
+              <td>A real number in $[0, 1]$ (e.g., 0.8 = pretty good, 0.2 = pretty bad)</td>
+            </tr>
+            <tr>
+              <td><strong>Loss</strong></td>
+              <td>Squared loss — penalizes the squared difference between prediction and truth</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why use the sigmoid?</span>
+        <p>The raw score $\mathbf{w} \cdot \phi(x)$ can be <em>any</em> real number (−∞ to +∞). But our rating $y$ is between 0 and 1. The sigmoid function <strong>squashes</strong> the score into that range — large positive scores become close to 1, large negative scores become close to 0, and zero maps to 0.5.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 2a ==================== -->
+    <div id="part2a">
+      <h2 class="section-title"><span class="icon">📐</span> Part 2a: The Loss Function</h2>
+
+      <p>We want to measure how bad our prediction is. We're using <strong>squared loss</strong>, so we take the difference between our prediction and the true value, and square it.</p>
+
+      <div class="card concept">
+        <span class="card-label">Building it step by step</span>
+        <p><strong>Step 1:</strong> Our prediction for input $x$ is:</p>
+        <p style="text-align: center;">$\hat{y} = \sigma(\mathbf{w} \cdot \phi(x))$</p>
+        <p><strong>Step 2:</strong> The error is how far off we are:</p>
+        <p style="text-align: center;">$\text{error} = \hat{y} - y = \sigma(\mathbf{w} \cdot \phi(x)) - y$</p>
+        <p><strong>Step 3:</strong> Square the error to make it always positive and penalize large errors more:</p>
+      </div>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 2a</h3>
+        $$\text{Loss}(x, y, \mathbf{w}) = \big(\sigma(\mathbf{w} \cdot \phi(x)) - y\big)^2$$
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>If our prediction $\sigma(\mathbf{w} \cdot \phi(x)) = 0.9$ and the true rating is $y = 0.8$, the loss is $(0.9 - 0.8)^2 = 0.01$ — small error! If we predicted 0.2 instead, the loss would be $(0.2 - 0.8)^2 = 0.36$ — big error. The squaring <strong>amplifies large mistakes</strong>.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 2b ==================== -->
+    <div id="part2b">
+      <h2 class="section-title"><span class="icon">📊</span> Part 2b: Computing the Gradient</h2>
+
+      <p>To use gradient descent, we need to know: <strong>"in which direction should I change $\mathbf{w}$ to reduce the loss?"</strong> That's what the gradient tells us.</p>
+
+      <p>Let's define a shorthand to keep things clean:</p>
+
+      <div class="card formula">
+        <span class="card-label">Shorthand</span>
+        $$p \;=\; \sigma(\mathbf{w} \cdot \phi(x))$$
+        <p style="color: var(--text-muted); margin-top: 8px;">$p$ is our predicted value — a number between 0 and 1.</p>
+      </div>
+
+      <p>Now we apply the <strong>chain rule</strong> step by step. Think of the loss as a chain of nested functions:</p>
+
+      <div class="card concept">
+        <span class="card-label">The Chain of Functions</span>
+        <p style="text-align: center; font-size: 1.1rem; margin: 12px 0;">$\text{Loss} = \big(\underbrace{\sigma(\underbrace{\mathbf{w} \cdot \phi(x)}_{\text{inner}})}_{{p}} - y\big)^2$</p>
+        <p>To differentiate, we peel off layers from outside in:</p>
+        <table>
+          <thead>
+            <tr><th>Layer</th><th>Function</th><th>Derivative</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Outer</strong></td>
+              <td>$(\cdot)^2$</td>
+              <td>$2(p - y)$</td>
+            </tr>
+            <tr>
+              <td><strong>Middle</strong></td>
+              <td>$\sigma(\cdot)$</td>
+              <td>$p(1 - p)$ &nbsp; ← this is a known property of the sigmoid!</td>
+            </tr>
+            <tr>
+              <td><strong>Inner</strong></td>
+              <td>$\mathbf{w} \cdot \phi(x)$</td>
+              <td>$\phi(x)$</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Key fact about the sigmoid</span>
+        <p>The derivative of the sigmoid function has a beautiful property:</p>
+        <p style="text-align: center;">$\sigma'(z) = \sigma(z) \cdot (1 - \sigma(z)) = p \cdot (1 - p)$</p>
+        <p>This means the sigmoid's slope is largest at $z = 0$ (where $p = 0.5$) and approaches zero as $z$ gets very large or very small. This fact will be crucial in parts 2c and 2d.</p>
+      </div>
+
+      <p>Multiply all three layers together by the chain rule:</p>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 2b</h3>
+        $$\nabla_{\mathbf{w}} \text{Loss}(x, y, \mathbf{w}) = 2(p - y) \cdot p(1 - p) \cdot \phi(x)$$
+        <p style="color: var(--text-muted); margin-top: 10px;">where $p = \sigma(\mathbf{w} \cdot \phi(x))$</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Reading the gradient</span>
+        <p>The gradient has three factors — each tells you something:</p>
+        <ul>
+          <li>$2(p - y)$ — <strong>how wrong</strong> is the prediction? (direction + magnitude of error)</li>
+          <li>$p(1-p)$ — <strong>how sensitive</strong> is the sigmoid right now? (large near $p=0.5$, small near 0 or 1)</li>
+          <li>$\phi(x)$ — <strong>which features</strong> are active? (update only those features)</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 2c ==================== -->
+    <div id="part2c">
+      <h2 class="section-title"><span class="icon">🌫️</span> Part 2c: Vanishing Gradients</h2>
+
+      <p>Now we focus on a specific case: <strong>one datapoint with $y = 1$</strong> and some arbitrary $\phi(x)$. Can we make the gradient vanishingly small?</p>
+
+      <h3 class="section-subtitle">Plugging in $y = 1$</h3>
+
+      <p>From Part 2b, the gradient is $2(p - y) \cdot p(1-p) \cdot \phi(x)$. With $y = 1$:</p>
+
+      <div class="card formula">
+        <span class="card-label">Gradient when $y = 1$</span>
+        $$\nabla_{\mathbf{w}} \text{Loss} = 2(p - 1) \cdot p(1-p) \cdot \phi(x)$$
+        <p style="margin-top: 10px; color: var(--text-muted);">Since $(p - 1) = -(1 - p)$, this simplifies to:</p>
+        $$= -2p(1 - p)^2 \cdot \phi(x)$$
+      </div>
+
+      <p>The <strong>magnitude</strong> (length) of the gradient is:</p>
+
+      <div class="card formula">
+        <span class="card-label">Magnitude</span>
+        $$\|\nabla_{\mathbf{w}} \text{Loss}\| = 2p(1-p)^2 \cdot \|\phi(x)\|$$
+      </div>
+
+      <p>Since $\|\phi(x)\|$ is fixed (it depends on the input, not on $\mathbf{w}$), we only need to look at the scalar factor $f(p) = p(1-p)^2$.</p>
+
+      <h3 class="section-subtitle">Can we make this arbitrarily small?</h3>
+
+      <div class="card concept">
+        <span class="card-label">The key observation</span>
+        <p>Remember: $p = \sigma(\mathbf{w} \cdot \phi(x))$.</p>
+        <ul>
+          <li>As $\mathbf{w} \cdot \phi(x) \to +\infty$ (make $\mathbf{w}$ very large in the direction of $\phi(x)$):<br>
+            → $p \to 1$<br>
+            → $(1-p) \to 0$<br>
+            → $p(1-p)^2 \to 1 \cdot 0^2 = 0$ ✅</li>
+        </ul>
+        <p>So yes! By making $\|\mathbf{w}\|$ large enough (pointing in the direction of $\phi(x)$), we push $p$ arbitrarily close to 1, which makes $(1-p)^2$ arbitrarily close to 0.</p>
+      </div>
+
+      <h3 class="section-subtitle">Can it be exactly zero?</h3>
+
+      <div class="card warning">
+        <span class="card-label">⚠️ No — never exactly zero!</span>
+        <p>For any <strong>finite</strong> $\mathbf{w}$, the sigmoid always satisfies $0 < p < 1$ (it never actually reaches 0 or 1). Therefore:</p>
+        <ul>
+          <li>$p > 0$ → the $p$ factor is always positive</li>
+          <li>$(1-p) > 0$ → the $(1-p)^2$ factor is always positive</li>
+        </ul>
+        <p>So $p(1-p)^2 > 0$ always. The gradient can get <strong>arbitrarily close to zero, but never exactly zero</strong> (assuming $\phi(x) \neq \mathbf{0}$).</p>
+      </div>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 2c</h3>
+        <p><strong>Yes</strong>, the gradient magnitude can be made arbitrarily small by making $\mathbf{w}$ large in the direction of $\phi(x)$, which pushes $p \to 1$.</p>
+        <p><strong>No</strong>, it can never be exactly zero for finite $\mathbf{w}$, because the sigmoid is always strictly between 0 and 1.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 This is the Vanishing Gradient Problem!</span>
+        <p>This is exactly what happens in deep neural networks. When the sigmoid is <strong>saturated</strong> (output near 0 or 1), its derivative $p(1-p)$ is nearly zero. This means gradient descent takes <strong>tiny steps</strong> and learning slows to a crawl — even when $\mathbf{w}$ is far from optimal.</p>
+        <p>This is one reason why modern networks use <strong>ReLU</strong> instead of sigmoid — ReLU doesn't saturate for positive inputs.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 2d ==================== -->
+    <div id="part2d">
+      <h2 class="section-title"><span class="icon">📈</span> Part 2d: Maximum Gradient Magnitude</h2>
+
+      <p>Same setup: $y = 1$, arbitrary $\phi(x)$. What's the <strong>largest</strong> the gradient can get?</p>
+
+      <p>From Part 2c, the gradient magnitude is $2 \cdot f(p) \cdot \|\phi(x)\|$ where $f(p) = p(1-p)^2$. We need to maximize $f(p)$ for $p \in (0, 1)$.</p>
+
+      <h3 class="section-subtitle">Finding the maximum of $f(p) = p(1-p)^2$</h3>
+
+      <div class="card concept">
+        <span class="card-label">Calculus — take the derivative and set it to zero</span>
+        <p><strong>Step 1:</strong> Expand using the product rule:</p>
+        <p style="text-align: center;">$f'(p) = (1-p)^2 + p \cdot 2(1-p)(-1)$</p>
+        <p><strong>Step 2:</strong> Factor out $(1-p)$:</p>
+        <p style="text-align: center;">$f'(p) = (1-p)\big[(1-p) - 2p\big] = (1-p)(1 - 3p)$</p>
+        <p><strong>Step 3:</strong> Set $f'(p) = 0$:</p>
+        <ul>
+          <li>$(1-p) = 0$ → $p = 1$ (boundary, where $f = 0$)</li>
+          <li>$(1-3p) = 0$ → $p = \tfrac{1}{3}$ ← this is our candidate!</li>
+        </ul>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Evaluating $f$ at the critical point</span>
+        <p style="text-align: center; font-size: 1.05rem;">$f\!\left(\tfrac{1}{3}\right) = \tfrac{1}{3} \cdot \left(\tfrac{2}{3}\right)^{\!2} = \tfrac{1}{3} \cdot \tfrac{4}{9} = \dfrac{4}{27}$</p>
+        <p style="margin-top: 12px;"><strong>Why is this the maximum?</strong> $f(p)$ is continuous on $[0, 1]$ with $f(0) = 0$ and $f(1) = 0$. The only critical point in $(0, 1)$ is $p = \tfrac{1}{3}$, where $f > 0$. So it must be the maximum.</p>
+      </div>
+
+      <p>Therefore the maximum gradient magnitude is:</p>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 2d</h3>
+        $$\max \|\nabla_{\mathbf{w}} \text{Loss}\| = 2 \cdot \frac{4}{27} \cdot \|\phi(x)\| = \boxed{\dfrac{8}{27} \|\phi(x)\|}$$
+        <p style="color: var(--text-muted); margin-top: 10px;">Achieved when $p = \tfrac{1}{3}$, i.e., when $\sigma(\mathbf{w} \cdot \phi(x)) = \tfrac{1}{3}$.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Intuition</span>
+        <p>The maximum gradient happens at $p = 1/3$, <strong>not</strong> at $p = 1/2$ (where the sigmoid slope is steepest). Why? Because there are two competing forces:</p>
+        <ul>
+          <li>$p(1-p)$: the sigmoid slope, maximized at $p = 0.5$</li>
+          <li>$(p - 1)$: the error term (we want $p = 1$), whose magnitude is maximized when $p$ is small</li>
+        </ul>
+        <p>The balance point $p = 1/3$ reflects the trade-off: the error is still large enough, and the sigmoid is still responsive enough, to produce the biggest gradient.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 2e ==================== -->
+    <div id="part2e">
+      <h2 class="section-title"><span class="icon">🔄</span> Part 2e: Transforming to Linear Regression</h2>
+
+      <p>The loss with the sigmoid is <strong>non-convex</strong> — gradient descent might get stuck in local minima. Can we reformulate the problem so we can use plain old linear regression instead?</p>
+
+      <h3 class="section-subtitle">The Setup</h3>
+      <div class="card concept">
+        <span class="card-label">Given</span>
+        <ul>
+          <li>Dataset $\mathbf{D}$ with pairs $(x, y)$</li>
+          <li>There exists some $\mathbf{w}$ that achieves <strong>zero loss</strong> on $\mathbf{D}$ using the non-linear predictor $\sigma(\mathbf{w} \cdot \phi(x))$</li>
+          <li>Goal: transform $y \to y'$ so that linear regression on $(x, y')$ also yields zero loss</li>
+        </ul>
+      </div>
+
+      <h3 class="section-subtitle">Deriving $y'$</h3>
+
+      <div class="card concept">
+        <span class="card-label">Step-by-step reasoning</span>
+
+        <p><strong>Step 1:</strong> Zero loss on original dataset $\mathbf{D}$ means:</p>
+        <p style="text-align: center;">$\sigma(\mathbf{w} \cdot \phi(x)) = y \quad \text{for all } (x,y)$</p>
+
+        <p><strong>Step 2:</strong> Apply the inverse of sigmoid ($\sigma^{-1}$, called the <strong>logit function</strong>) to both sides:</p>
+        <p style="text-align: center;">$\mathbf{w} \cdot \phi(x) = \sigma^{-1}(y) = \ln\!\left(\dfrac{y}{1 - y}\right)$</p>
+
+        <p><strong>Step 3:</strong> For linear regression on $\mathbf{D}'$ with zero loss, we need:</p>
+        <p style="text-align: center;">$\mathbf{w} \cdot \phi(x) = y'$</p>
+
+        <p><strong>Step 4:</strong> Comparing Steps 2 and 3, we get:</p>
+        <p style="text-align: center;">$y' = \sigma^{-1}(y) = \ln\!\left(\dfrac{y}{1 - y}\right)$</p>
+      </div>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 2e</h3>
+        $$y' = \ln\!\left(\frac{y}{1-y}\right)$$
+        <p style="color: var(--text-muted); margin-top: 10px;">This is the <strong>logit function</strong> — the inverse of the sigmoid.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why does this work?</span>
+        <p>The sigmoid was "wrapping" the linear score into $[0, 1]$. By applying the <strong>inverse sigmoid (logit)</strong> to the labels $y$, we "unwrap" them back into the full real line. Now the target $y'$ lives in $(-\infty, +\infty)$, just like the linear predictor $\mathbf{w} \cdot \phi(x)$.</p>
+        <p>In other words: instead of fitting a complex non-linear model, we <strong>transform the data</strong> so that a simple linear model suffices. This is a powerful general technique!</p>
+      </div>
+
+      <div class="card warning">
+        <span class="card-label">⚠️ Requirement for this to work</span>
+        <p>The logit function $\ln(y/(1-y))$ is only defined when $0 < y < 1$. If $y = 0$ or $y = 1$, the logit is undefined ($-\infty$ or $+\infty$). This is fine for the problem since it states zero loss exists with the sigmoid predictor, which always outputs strictly between 0 and 1.</p>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Justification / Proof</span>
+        <p><strong>Original dataset $\mathbf{D}$:</strong> Uses predictor $\sigma(\mathbf{w} \cdot \phi(x))$ with squared loss.</p>
+        <p style="text-align: center;">$\text{Loss}_{\mathbf{D}} = (\sigma(\mathbf{w} \cdot \phi(x)) - y)^2 = 0$</p>
+        <p>This means $\sigma(\mathbf{w} \cdot \phi(x)) = y$, which means $\mathbf{w} \cdot \phi(x) = \ln(y/(1-y))$.</p>
+
+        <p style="margin-top: 16px;"><strong>Transformed dataset $\mathbf{D}'$:</strong> Uses linear predictor $\mathbf{w} \cdot \phi(x)$ with squared loss.</p>
+        <p style="text-align: center;">$\text{Loss}_{\mathbf{D}'} = (\mathbf{w} \cdot \phi(x) - y')^2$</p>
+        <p>Setting $y' = \ln(y/(1-y))$ gives:</p>
+        <p style="text-align: center;">$\text{Loss}_{\mathbf{D}'} = (\mathbf{w} \cdot \phi(x) - \ln(y/(1-y)))^2 = 0$ ✅</p>
+        <p>The same $\mathbf{w}$ achieves zero loss on both datasets. Since least squares on $\mathbf{D}'$ is a <strong>convex</strong> problem (quadratic in $\mathbf{w}$), gradient descent is guaranteed to converge to this global minimum $\mathbf{w}^*$.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PROBLEM 2 TAKEAWAYS ==================== -->
+    <div id="takeaways2">
+      <h2 class="section-title"><span class="icon">🧠</span> Problem 2 — Big Picture Takeaways</h2>
+
+      <div class="takeaway">
+        <div class="num">1</div>
+        <div class="content">
+          <p><strong>The sigmoid squashes scores into $[0,1]$.</strong> This is useful for predicting probabilities or ratings, but introduces non-linearity that makes the loss non-convex.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">2</div>
+        <div class="content">
+          <p><strong>Chain rule is your best friend.</strong> Complex loss functions are just nested functions. Peel off layers from outside in: outer derivative × middle derivative × inner derivative.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">3</div>
+        <div class="content">
+          <p><strong>Vanishing gradients are real and dangerous.</strong> When the sigmoid saturates ($p$ near 0 or 1), its derivative $p(1-p) \approx 0$, and gradient descent practically stalls. This is why deep learning moved to ReLU activations.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">4</div>
+        <div class="content">
+          <p><strong>You can "undo" non-linearity by transforming the data.</strong> The logit transform $y' = \ln(y/(1-y))$ converts a non-convex problem into a convex (linear regression) problem. This is the core idea behind <strong>generalized linear models</strong> in statistics.</p>
         </div>
       </div>
 

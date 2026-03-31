@@ -1,0 +1,1017 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Problem 4: K-Means Clustering — Explained</title>
+  <script>
+    MathJax = {
+      tex: {
+        inlineMath: [['$', '$']],
+        displayMath: [['$$', '$$']],
+        processEscapes: true
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+      }
+    };
+  </script>
+  <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0f0f1a;
+      --bg-secondary: #1a1a2e;
+      --bg-card: #16213e;
+      --bg-card-hover: #1a2744;
+      --accent-blue: #4fc3f7;
+      --accent-purple: #b388ff;
+      --accent-green: #69f0ae;
+      --accent-orange: #ffab40;
+      --accent-red: #ff5252;
+      --accent-cyan: #84ffff;
+      --accent-pink: #f48fb1;
+      --accent-yellow: #fff176;
+      --text-primary: #e8eaf6;
+      --text-secondary: #9fa8da;
+      --text-muted: #7986cb;
+      --border-subtle: rgba(79, 195, 247, 0.15);
+      --glow-blue: rgba(79, 195, 247, 0.3);
+      --glow-purple: rgba(179, 136, 255, 0.3);
+      --glow-green: rgba(105, 240, 174, 0.3);
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      line-height: 1.8;
+      font-size: 16px;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: '';
+      position: fixed;
+      top: 0; left: 0;
+      width: 100%; height: 100%;
+      background:
+        radial-gradient(ellipse at 20% 20%, rgba(79, 195, 247, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 80% 80%, rgba(179, 136, 255, 0.05) 0%, transparent 50%),
+        radial-gradient(ellipse at 50% 50%, rgba(105, 240, 174, 0.03) 0%, transparent 50%);
+      z-index: -1;
+      animation: bgPulse 8s ease-in-out infinite alternate;
+    }
+
+    @keyframes bgPulse {
+      0% { opacity: 0.7; }
+      100% { opacity: 1; }
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 40px 30px 80px;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 60px 0 50px;
+    }
+
+    .hero h1 {
+      font-size: 2.6rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple), var(--accent-pink));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+
+    .hero .subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      font-weight: 300;
+    }
+
+    .badge {
+      display: inline-block;
+      background: linear-gradient(135deg, rgba(79,195,247,0.15), rgba(179,136,255,0.15));
+      border: 1px solid var(--border-subtle);
+      border-radius: 20px;
+      padding: 4px 16px;
+      font-size: 0.8rem;
+      color: var(--accent-cyan);
+      font-weight: 500;
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .section-title {
+      font-size: 1.8rem;
+      font-weight: 700;
+      margin: 50px 0 10px;
+      color: var(--accent-blue);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-title .icon { font-size: 1.5rem; }
+
+    .section-subtitle {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin: 35px 0 10px;
+      color: var(--accent-purple);
+    }
+
+    .step-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      margin: 30px 0 10px;
+      color: var(--accent-orange);
+      border-left: 3px solid var(--accent-orange);
+      padding-left: 14px;
+    }
+
+    /* Cards */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 28px;
+      margin: 20px 0;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+    }
+
+    .card.concept { border-left: 4px solid var(--accent-blue); background: linear-gradient(135deg, rgba(79, 195, 247, 0.05), var(--bg-card)); }
+    .card.formula { border-left: 4px solid var(--accent-purple); background: linear-gradient(135deg, rgba(179, 136, 255, 0.05), var(--bg-card)); text-align: center; padding: 32px 28px; }
+    .card.intuition { border-left: 4px solid var(--accent-green); background: linear-gradient(135deg, rgba(105, 240, 174, 0.05), var(--bg-card)); }
+    .card.warning { border-left: 4px solid var(--accent-red); background: linear-gradient(135deg, rgba(255, 82, 82, 0.05), var(--bg-card)); }
+    .card.answer { border-left: 4px solid var(--accent-cyan); background: linear-gradient(135deg, rgba(132, 255, 255, 0.06), var(--bg-card)); }
+    .card.proof { border-left: 4px solid var(--accent-pink); background: linear-gradient(135deg, rgba(244, 143, 177, 0.05), var(--bg-card)); }
+
+    .card-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .card.concept .card-label { color: var(--accent-blue); }
+    .card.formula .card-label { color: var(--accent-purple); }
+    .card.intuition .card-label { color: var(--accent-green); }
+    .card.warning .card-label { color: var(--accent-red); }
+    .card.answer .card-label { color: var(--accent-cyan); }
+    .card.proof .card-label { color: var(--accent-pink); }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin: 16px 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid var(--border-subtle);
+    }
+
+    thead th {
+      background: rgba(79, 195, 247, 0.12);
+      color: var(--accent-blue);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      padding: 14px 16px;
+      text-align: left;
+    }
+
+    tbody td {
+      padding: 12px 16px;
+      border-top: 1px solid rgba(255,255,255,0.04);
+      font-size: 0.95rem;
+    }
+
+    tbody tr { background: var(--bg-secondary); transition: background 0.15s; }
+    tbody tr:hover { background: var(--bg-card-hover); }
+    tbody tr:nth-child(even) { background: rgba(26, 26, 46, 0.6); }
+    tbody tr:nth-child(even):hover { background: var(--bg-card-hover); }
+
+    .positive { color: var(--accent-green); font-weight: 600; }
+    .negative { color: var(--accent-red); font-weight: 600; }
+    .zero { color: var(--text-muted); font-weight: 600; }
+    .highlight-word { color: var(--accent-orange); font-weight: 500; }
+
+    p { color: var(--text-secondary); margin: 12px 0; }
+    strong { color: var(--text-primary); font-weight: 600; }
+
+    .computation {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+    }
+
+    .computation .comp-row {
+      display: flex;
+      align-items: baseline;
+      gap: 10px;
+      margin: 8px 0;
+      padding: 6px 0;
+    }
+
+    .comp-label {
+      font-weight: 600;
+      color: var(--accent-blue);
+      min-width: 100px;
+      font-size: 0.9rem;
+    }
+
+    .comp-value { color: var(--text-primary); }
+    .comp-check { margin-left: auto; font-size: 1.1rem; }
+
+    .divider {
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--border-subtle), transparent);
+      margin: 40px 0;
+    }
+
+    .final-answer {
+      background: linear-gradient(135deg, rgba(132, 255, 255, 0.08), rgba(79, 195, 247, 0.08));
+      border: 2px solid rgba(132, 255, 255, 0.25);
+      border-radius: 16px;
+      padding: 32px;
+      margin: 30px 0;
+      text-align: center;
+    }
+
+    .final-answer h3 {
+      color: var(--accent-cyan);
+      font-size: 1.3rem;
+      margin-bottom: 16px;
+    }
+
+    ul, ol { margin: 10px 0 10px 20px; color: var(--text-secondary); }
+    li { margin: 6px 0; }
+
+    .step-connector {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 24px 0;
+      gap: 12px;
+    }
+
+    .step-connector .line { flex: 1; height: 1px; background: var(--border-subtle); }
+    .step-connector .dot { width: 10px; height: 10px; background: var(--accent-purple); border-radius: 50%; box-shadow: 0 0 10px var(--glow-purple); }
+
+    .takeaway {
+      display: flex;
+      gap: 16px;
+      margin: 12px 0;
+      padding: 16px;
+      border-radius: 12px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      align-items: flex-start;
+    }
+
+    .takeaway .num {
+      background: linear-gradient(135deg, var(--accent-blue), var(--accent-purple));
+      color: var(--bg-primary);
+      font-weight: 800;
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.85rem;
+      flex-shrink: 0;
+      margin-top: 2px;
+    }
+
+    .takeaway .content { flex: 1; }
+    .takeaway .content strong { color: var(--accent-blue); }
+
+    .toc {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: 16px;
+      padding: 24px 28px;
+      margin: 30px 0;
+    }
+
+    .toc h3 {
+      color: var(--accent-purple);
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 14px;
+    }
+
+    .toc a {
+      color: var(--text-secondary);
+      text-decoration: none;
+      display: block;
+      padding: 6px 0;
+      transition: color 0.2s;
+      font-size: 0.95rem;
+    }
+
+    .toc a:hover { color: var(--accent-blue); }
+    .toc a::before { content: '→ '; color: var(--accent-purple); opacity: 0.5; }
+
+    /* Code blocks */
+    pre {
+      background: #0d1117;
+      border: 1px solid rgba(79, 195, 247, 0.12);
+      border-radius: 12px;
+      padding: 24px;
+      margin: 16px 0;
+      overflow-x: auto;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.88rem;
+      line-height: 1.7;
+      color: #c9d1d9;
+    }
+
+    pre code {
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    code {
+      font-family: 'JetBrains Mono', monospace;
+      background: rgba(79, 195, 247, 0.1);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      color: var(--accent-cyan);
+    }
+
+    pre code {
+      background: none;
+      padding: 0;
+      color: inherit;
+    }
+
+    .code-comment { color: #8b949e; }
+    .code-keyword { color: #ff7b72; }
+    .code-string { color: #a5d6ff; }
+    .code-function { color: #d2a8ff; }
+    .code-number { color: #79c0ff; }
+    .code-builtin { color: #ffa657; }
+
+    /* Arrows for algorithm flow */
+    .arrow-down {
+      text-align: center;
+      font-size: 1.5rem;
+      color: var(--accent-purple);
+      margin: 16px 0;
+    }
+
+    @media (max-width: 700px) {
+      .container { padding: 20px 16px 60px; }
+      .hero h1 { font-size: 1.8rem; }
+      .section-title { font-size: 1.4rem; }
+      table { font-size: 0.85rem; }
+      thead th, tbody td { padding: 10px 10px; }
+      pre { padding: 16px; font-size: 0.8rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Hero Header -->
+    <div class="hero">
+      <div class="badge">CS221 · Sentiment Analysis</div>
+      <h1>Problem 4: K-Means Clustering</h1>
+      <p class="subtitle">A complete walkthrough — from manual simulation to code implementation</p>
+    </div>
+
+    <!-- Table of Contents -->
+    <div class="toc">
+      <h3>Contents</h3>
+      <a href="#background">Background: What is K-Means?</a>
+      <a href="#part4a">Part 4a: Running 2-Means by Hand</a>
+      <a href="#part4b">Part 4b: Implementing K-Means (Code)</a>
+      <a href="#part4c">Part 4c: K-Means with Constraints</a>
+      <a href="#part4d">Part 4d: Why Run Multiple Times?</a>
+      <a href="#part4e">Part 4e: Scaling Dimensions</a>
+      <a href="#takeaways">Big Picture Takeaways</a>
+    </div>
+
+    <!-- ==================== BACKGROUND ==================== -->
+    <div id="background">
+      <h2 class="section-title"><span class="icon">🎯</span> Background: What is K-Means?</h2>
+
+      <p>K-Means is an <strong>unsupervised learning</strong> algorithm. Unlike classification (where we have labels), here we just have data points and want to group them into <strong>K clusters</strong> — points that are "close together" should be in the same group.</p>
+
+      <div class="card concept">
+        <span class="card-label">The Three Key Pieces</span>
+        <table>
+          <thead>
+            <tr><th>Piece</th><th>What It Is</th><th>Notation</th></tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Data points</strong></td>
+              <td>The examples we want to cluster</td>
+              <td>$\phi(x_1), \phi(x_2), \ldots, \phi(x_n)$</td>
+            </tr>
+            <tr>
+              <td><strong>Cluster centers</strong></td>
+              <td>The "representative point" of each cluster (the average)</td>
+              <td>$\mu_1, \mu_2, \ldots, \mu_K$</td>
+            </tr>
+            <tr>
+              <td><strong>Assignments</strong></td>
+              <td>Which cluster each point belongs to</td>
+              <td>$z_i \in \{1, 2, \ldots, K\}$</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">The Algorithm — Two Steps, Repeated</span>
+        <p>K-Means alternates between two steps until nothing changes:</p>
+        <p><strong>Step 1: ASSIGN</strong> — For each data point, find which center is closest. Assign the point to that cluster.</p>
+        <p style="text-align: center;">$z_i = \arg\min_{j} \|\phi(x_i) - \mu_j\|^2$</p>
+        <p><strong>Step 2: UPDATE</strong> — For each cluster, recompute the center as the average of all points assigned to it.</p>
+        <p style="text-align: center;">$\mu_j = \dfrac{1}{|C_j|}\sum_{i \in C_j} \phi(x_i)$</p>
+        <p><strong>Repeat</strong> until assignments don't change (convergence).</p>
+      </div>
+
+      <div class="card formula">
+        <span class="card-label">The Objective: Reconstruction Loss</span>
+        $$\text{Loss} = \sum_{i=1}^{n} \|\mu_{z_i} - \phi(x_i)\|^2$$
+        <p style="color: var(--text-muted); margin-top: 8px;">Sum of squared distances from each point to its assigned center. Lower is better.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Plain English intuition</span>
+        <p>Imagine you're organizing desks in a school. You have K classrooms. You want to assign each student to a room so that students in the same room are "similar." The room's center desk should be right in the middle of all its students.</p>
+        <p><strong>Step 1:</strong> Each student walks to the nearest classroom center. <strong>Step 2:</strong> Each classroom moves its center desk to be right in the middle of its current students. Repeat until nobody wants to switch rooms.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 4a ==================== -->
+    <div id="part4a">
+      <h2 class="section-title"><span class="icon">✏️</span> Part 4a: Running 2-Means by Hand</h2>
+
+      <h3 class="section-subtitle">The Dataset</h3>
+      <table>
+        <thead>
+          <tr><th>Point</th><th>Coordinates</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>$\phi(x_1)$</td><td>$[1, 0]$</td></tr>
+          <tr><td>$\phi(x_2)$</td><td>$[1, 2]$</td></tr>
+          <tr><td>$\phi(x_3)$</td><td>$[3, 0]$</td></tr>
+          <tr><td>$\phi(x_4)$</td><td>$[2, 2]$</td></tr>
+        </tbody>
+      </table>
+
+      <p>We run K=2 means with two different initializations. The squared distance between two points $[a,b]$ and $[c,d]$ is $(a-c)^2 + (b-d)^2$.</p>
+
+      <!-- ===== Initialization 1 ===== -->
+      <h3 class="section-subtitle">Initialization 1: $\mu_1 = [2, 3]$ and $\mu_2 = [2, -1]$</h3>
+
+      <h3 class="step-title">Iteration 1 — Assign Step</h3>
+      <p>For each point, compute the squared distance to both centers, then assign to the closer one:</p>
+
+      <table>
+        <thead><tr><th>Point</th><th>$\|\cdot - \mu_1\|^2$</th><th>$\|\cdot - \mu_2\|^2$</th><th>Assigned to</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>$x_1 = [1,0]$</td>
+            <td>$(1{-}2)^2 + (0{-}3)^2 = 1 + 9 = 10$</td>
+            <td>$(1{-}2)^2 + (0{-}({-}1))^2 = 1 + 1 = 2$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_2 = [1,2]$</td>
+            <td>$(1{-}2)^2 + (2{-}3)^2 = 1 + 1 = 2$</td>
+            <td>$(1{-}2)^2 + (2{-}({-}1))^2 = 1 + 9 = 10$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_3 = [3,0]$</td>
+            <td>$(3{-}2)^2 + (0{-}3)^2 = 1 + 9 = 10$</td>
+            <td>$(3{-}2)^2 + (0{-}({-}1))^2 = 1 + 1 = 2$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_4 = [2,2]$</td>
+            <td>$(2{-}2)^2 + (2{-}3)^2 = 0 + 1 = 1$</td>
+            <td>$(2{-}2)^2 + (2{-}({-}1))^2 = 0 + 9 = 9$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><strong>Cluster 1 ($\mu_1$):</strong> $\{x_2, x_4\}$ = $\{[1,2], [2,2]\}$ &nbsp;&nbsp; <strong>Cluster 2 ($\mu_2$):</strong> $\{x_1, x_3\}$ = $\{[1,0], [3,0]\}$</p>
+
+      <h3 class="step-title">Iteration 1 — Update Step</h3>
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">$\mu_1$:</span>
+          <span class="comp-value">$\frac{[1,2] + [2,2]}{2} = \frac{[3,4]}{2} = [1.5, 2]$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">$\mu_2$:</span>
+          <span class="comp-value">$\frac{[1,0] + [3,0]}{2} = \frac{[4,0]}{2} = [2, 0]$</span>
+        </div>
+      </div>
+
+      <h3 class="step-title">Iteration 2 — Assign Step</h3>
+      <table>
+        <thead><tr><th>Point</th><th>$\|\cdot - \mu_1\|^2$</th><th>$\|\cdot - \mu_2\|^2$</th><th>Assigned to</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>$x_1 = [1,0]$</td>
+            <td>$(1{-}1.5)^2 + (0{-}2)^2 = 0.25 + 4 = 4.25$</td>
+            <td>$(1{-}2)^2 + (0{-}0)^2 = 1 + 0 = 1$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_2 = [1,2]$</td>
+            <td>$(1{-}1.5)^2 + (2{-}2)^2 = 0.25 + 0 = 0.25$</td>
+            <td>$(1{-}2)^2 + (2{-}0)^2 = 1 + 4 = 5$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_3 = [3,0]$</td>
+            <td>$(3{-}1.5)^2 + (0{-}2)^2 = 2.25 + 4 = 6.25$</td>
+            <td>$(3{-}2)^2 + (0{-}0)^2 = 1 + 0 = 1$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_4 = [2,2]$</td>
+            <td>$(2{-}1.5)^2 + (2{-}2)^2 = 0.25 + 0 = 0.25$</td>
+            <td>$(2{-}2)^2 + (2{-}0)^2 = 0 + 4 = 4$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Assignments are the <strong>same</strong> as Iteration 1 → <span class="positive">CONVERGED! ✅</span></p>
+
+      <div class="final-answer">
+        <h3>✅ Initialization 1 — Final Result</h3>
+        <p>$z = [2, 1, 2, 1]$ &nbsp;&nbsp;(i.e., $x_1 \to \mu_2$, $x_2 \to \mu_1$, $x_3 \to \mu_2$, $x_4 \to \mu_1$)</p>
+        <p>$\mu_1 = [1.5, 2]$, &nbsp; $\mu_2 = [2, 0]$</p>
+        <p style="color: var(--text-muted);">Top-heavy points grouped together, bottom-heavy points grouped together.</p>
+      </div>
+
+      <div class="step-connector"><div class="line"></div><div class="dot"></div><div class="line"></div></div>
+
+      <!-- ===== Initialization 2 ===== -->
+      <h3 class="section-subtitle">Initialization 2: $\mu_1 = [0, 1]$ and $\mu_2 = [3, 2]$</h3>
+
+      <h3 class="step-title">Iteration 1 — Assign Step</h3>
+      <table>
+        <thead><tr><th>Point</th><th>$\|\cdot - \mu_1\|^2$</th><th>$\|\cdot - \mu_2\|^2$</th><th>Assigned to</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>$x_1 = [1,0]$</td>
+            <td>$(1{-}0)^2 + (0{-}1)^2 = 1 + 1 = 2$</td>
+            <td>$(1{-}3)^2 + (0{-}2)^2 = 4 + 4 = 8$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_2 = [1,2]$</td>
+            <td>$(1{-}0)^2 + (2{-}1)^2 = 1 + 1 = 2$</td>
+            <td>$(1{-}3)^2 + (2{-}2)^2 = 4 + 0 = 4$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_3 = [3,0]$</td>
+            <td>$(3{-}0)^2 + (0{-}1)^2 = 9 + 1 = 10$</td>
+            <td>$(3{-}3)^2 + (0{-}2)^2 = 0 + 4 = 4$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_4 = [2,2]$</td>
+            <td>$(2{-}0)^2 + (2{-}1)^2 = 4 + 1 = 5$</td>
+            <td>$(2{-}3)^2 + (2{-}2)^2 = 1 + 0 = 1$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p><strong>Cluster 1:</strong> $\{x_1, x_2\}$ = $\{[1,0], [1,2]\}$ &nbsp;&nbsp; <strong>Cluster 2:</strong> $\{x_3, x_4\}$ = $\{[3,0], [2,2]\}$</p>
+
+      <h3 class="step-title">Iteration 1 — Update Step</h3>
+      <div class="computation">
+        <div class="comp-row">
+          <span class="comp-label">$\mu_1$:</span>
+          <span class="comp-value">$\frac{[1,0] + [1,2]}{2} = \frac{[2,2]}{2} = [1, 1]$</span>
+        </div>
+        <div class="comp-row">
+          <span class="comp-label">$\mu_2$:</span>
+          <span class="comp-value">$\frac{[3,0] + [2,2]}{2} = \frac{[5,2]}{2} = [2.5, 1]$</span>
+        </div>
+      </div>
+
+      <h3 class="step-title">Iteration 2 — Assign Step</h3>
+      <table>
+        <thead><tr><th>Point</th><th>$\|\cdot - \mu_1\|^2$</th><th>$\|\cdot - \mu_2\|^2$</th><th>Assigned to</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>$x_1 = [1,0]$</td>
+            <td>$(1{-}1)^2 + (0{-}1)^2 = 0 + 1 = 1$</td>
+            <td>$(1{-}2.5)^2 + (0{-}1)^2 = 2.25 + 1 = 3.25$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_2 = [1,2]$</td>
+            <td>$(1{-}1)^2 + (2{-}1)^2 = 0 + 1 = 1$</td>
+            <td>$(1{-}2.5)^2 + (2{-}1)^2 = 2.25 + 1 = 3.25$</td>
+            <td class="positive">$\mu_1$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_3 = [3,0]$</td>
+            <td>$(3{-}1)^2 + (0{-}1)^2 = 4 + 1 = 5$</td>
+            <td>$(3{-}2.5)^2 + (0{-}1)^2 = 0.25 + 1 = 1.25$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+          <tr>
+            <td>$x_4 = [2,2]$</td>
+            <td>$(2{-}1)^2 + (2{-}1)^2 = 1 + 1 = 2$</td>
+            <td>$(2{-}2.5)^2 + (2{-}1)^2 = 0.25 + 1 = 1.25$</td>
+            <td class="positive">$\mu_2$ ✅</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p>Assignments are the <strong>same</strong> as Iteration 1 → <span class="positive">CONVERGED! ✅</span></p>
+
+      <div class="final-answer">
+        <h3>✅ Initialization 2 — Final Result</h3>
+        <p>$z = [1, 1, 2, 2]$ &nbsp;&nbsp;(i.e., $x_1 \to \mu_1$, $x_2 \to \mu_1$, $x_3 \to \mu_2$, $x_4 \to \mu_2$)</p>
+        <p>$\mu_1 = [1, 1]$, &nbsp; $\mu_2 = [2.5, 1]$</p>
+        <p style="color: var(--text-muted);">Left-side points grouped together, right-side points grouped together.</p>
+      </div>
+
+      <div class="card warning">
+        <span class="card-label">⚠️ Key observation</span>
+        <p>The two initializations gave <strong>completely different clusterings!</strong></p>
+        <ul>
+          <li><strong>Init 1</strong> separated points by <strong>vertical position</strong> (top vs. bottom)</li>
+          <li><strong>Init 2</strong> separated points by <strong>horizontal position</strong> (left vs. right)</li>
+        </ul>
+        <p>This shows that <strong>K-Means is sensitive to initialization</strong>. The algorithm finds a local minimum, but different starting points can lead to different local minima.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 4b ==================== -->
+    <div id="part4b">
+      <h2 class="section-title"><span class="icon">💻</span> Part 4b: Implementing K-Means (Code)</h2>
+
+      <h3 class="section-subtitle">The Algorithm Overview</h3>
+      <div class="card concept">
+        <span class="card-label">What the code needs to do</span>
+        <ol>
+          <li><strong>Initialize</strong> K centers by picking K random data points</li>
+          <li><strong>Repeat</strong> until convergence (or maxIters):
+            <ul>
+              <li><strong>Assign</strong> each point to its nearest center</li>
+              <li><strong>Update</strong> each center to be the average of its assigned points</li>
+            </ul>
+          </li>
+          <li><strong>Return</strong> the centers, assignments, and total reconstruction loss</li>
+        </ol>
+      </div>
+
+      <div class="card warning">
+        <span class="card-label">⚠️ Performance Matters!</span>
+        <p>Data points are <strong>sparse vectors</strong> (dicts), but after averaging, centers become <strong>dense</strong> (many keys). Computing $\|\mu - \phi(x)\|^2$ naively is expensive. The trick is to use this identity:</p>
+        <p style="text-align: center;">$\|\mu - \phi(x)\|^2 = \|\mu\|^2 - 2 \cdot \mu \cdot \phi(x) + \|\phi(x)\|^2$</p>
+        <p>We precompute $\|\mu_j\|^2$ and $\|\phi(x_i)\|^2$ once, then only need the dot product (which is fast due to the sparse $\phi(x)$).</p>
+      </div>
+
+      <h3 class="section-subtitle">The Complete Code</h3>
+
+<pre><code><span class="code-keyword">def</span> <span class="code-function">kmeans</span>(examples, K, maxIters):
+    <span class="code-comment"># Step 1: Initialize centers to K random data points</span>
+    centers = [dict(examples[i]) <span class="code-keyword">for</span> i <span class="code-keyword">in</span> random.sample(range(len(examples)), K)]
+    assignments = [<span class="code-number">0</span>] * len(examples)
+
+    <span class="code-keyword">for</span> t <span class="code-keyword">in</span> range(maxIters):
+        <span class="code-comment"># Precompute ||center_j||^2 for speed</span>
+        centerNorms = [dotProduct(c, c) <span class="code-keyword">for</span> c <span class="code-keyword">in</span> centers]
+
+        <span class="code-comment"># Step 2: ASSIGN each point to its nearest center</span>
+        newAssignments = []
+        <span class="code-keyword">for</span> i, x <span class="code-keyword">in</span> enumerate(examples):
+            <span class="code-comment"># For each center j, distance = ||c_j||^2 - 2*(c_j · x) + ||x||^2</span>
+            <span class="code-comment"># Since ||x||^2 is the same for all j, we can ignore it for argmin</span>
+            bestJ = min(range(K), key=<span class="code-keyword">lambda</span> j: centerNorms[j] - <span class="code-number">2</span> * dotProduct(centers[j], x))
+            newAssignments.append(bestJ)
+
+        <span class="code-comment"># Check for convergence (assignments didn't change)</span>
+        <span class="code-keyword">if</span> newAssignments == assignments:
+            <span class="code-keyword">break</span>
+        assignments = newAssignments
+
+        <span class="code-comment"># Step 3: UPDATE centers to be the average of assigned points</span>
+        <span class="code-keyword">for</span> j <span class="code-keyword">in</span> range(K):
+            clusterPoints = [examples[i] <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(examples)) <span class="code-keyword">if</span> assignments[i] == j]
+            <span class="code-keyword">if</span> len(clusterPoints) > <span class="code-number">0</span>:
+                centers[j] = {}
+                <span class="code-keyword">for</span> x <span class="code-keyword">in</span> clusterPoints:
+                    increment(centers[j], <span class="code-number">1.0</span>, x)
+                <span class="code-keyword">for</span> f <span class="code-keyword">in</span> centers[j]:
+                    centers[j][f] /= len(clusterPoints)
+
+    <span class="code-comment"># Compute total reconstruction loss</span>
+    totalCost = <span class="code-number">0.0</span>
+    <span class="code-keyword">for</span> i <span class="code-keyword">in</span> range(len(examples)):
+        <span class="code-comment"># ||center - x||^2 = ||c||^2 - 2*(c·x) + ||x||^2</span>
+        totalCost += dotProduct(centers[assignments[i]], centers[assignments[i]]) \
+                   - <span class="code-number">2</span> * dotProduct(centers[assignments[i]], examples[i]) \
+                   + dotProduct(examples[i], examples[i])
+
+    <span class="code-keyword">return</span> centers, assignments, totalCost</code></pre>
+
+      <h3 class="section-subtitle">Line-by-Line Explanation</h3>
+
+      <div class="card concept">
+        <span class="card-label">Step 1: Initialization</span>
+<pre><code>centers = [dict(examples[i]) for i in random.sample(range(len(examples)), K)]
+assignments = [0] * len(examples)</code></pre>
+        <ul>
+          <li><code>random.sample(range(len(examples)), K)</code> — picks K unique random indices</li>
+          <li><code>dict(examples[i])</code> — makes a <strong>copy</strong> of the data point (so we don't modify the original data)</li>
+          <li><code>assignments = [0] * len(examples)</code> — start all assignments at 0 (we'll update them immediately)</li>
+        </ul>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Step 2: The Assignment Step (the speed trick)</span>
+<pre><code>centerNorms = [dotProduct(c, c) for c in centers]
+
+bestJ = min(range(K), key=lambda j: centerNorms[j] - 2 * dotProduct(centers[j], x))</code></pre>
+        <p>This is the core performance optimization. Instead of computing the full distance:</p>
+        <p style="text-align: center;">$\|\mu_j - x\|^2 = \underbrace{\|\mu_j\|^2}_{\text{precomputed}} - 2 \cdot \underbrace{\mu_j \cdot x}_{\text{fast (x is sparse)}} + \underbrace{\|x\|^2}_{\text{same for all j}}$</p>
+        <p>Since $\|x\|^2$ doesn't depend on $j$, it won't change which $j$ is the minimum. So we drop it!</p>
+        <p><code>min(range(K), key=...)</code> finds the index <code>j</code> from 0 to K-1 that minimizes the expression.</p>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Convergence Check</span>
+<pre><code>if newAssignments == assignments:
+    break</code></pre>
+        <p>If nobody changed clusters, we've converged — stop early! No point continuing for the remaining iterations.</p>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Step 3: The Update Step</span>
+<pre><code>for j in range(K):
+    clusterPoints = [examples[i] for i in range(len(examples)) if assignments[i] == j]
+    if len(clusterPoints) > 0:
+        centers[j] = {}
+        for x in clusterPoints:
+            increment(centers[j], 1.0, x)
+        for f in centers[j]:
+            centers[j][f] /= len(clusterPoints)</code></pre>
+        <ol>
+          <li><strong>Collect</strong> all points assigned to cluster $j$</li>
+          <li><strong>Reset</strong> center to empty: <code>centers[j] = {}</code></li>
+          <li><strong>Sum</strong> all points using <code>increment(centers[j], 1.0, x)</code> — this does <code>centers[j] += 1.0 * x</code></li>
+          <li><strong>Divide</strong> each feature by the count to get the average</li>
+        </ol>
+        <p>The <code>if len(clusterPoints) > 0</code> guard handles the edge case where a cluster becomes empty.</p>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Computing the Total Cost</span>
+<pre><code>totalCost = 0.0
+for i in range(len(examples)):
+    totalCost += dotProduct(centers[assignments[i]], centers[assignments[i]]) \
+               - 2 * dotProduct(centers[assignments[i]], examples[i]) \
+               + dotProduct(examples[i], examples[i])</code></pre>
+        <p>Uses the same expansion trick: $\|\mu - x\|^2 = \|\mu\|^2 - 2\mu \cdot x + \|x\|^2$</p>
+        <p>This time we include $\|x\|^2$ because we need the actual distance, not just the relative ranking.</p>
+      </div>
+
+      <div class="final-answer">
+        <h3>📋 What to Type (compact version)</h3>
+        <p style="text-align: left; color: var(--text-secondary);">Replace the <code>raise Exception</code> inside <code>kmeans</code> with:</p>
+<pre style="text-align: left;"><code>    centers = [dict(examples[i]) for i in random.sample(range(len(examples)), K)]
+    assignments = [0] * len(examples)
+
+    for t in range(maxIters):
+        centerNorms = [dotProduct(c, c) for c in centers]
+
+        newAssignments = []
+        for i, x in enumerate(examples):
+            bestJ = min(range(K), key=lambda j: centerNorms[j] - 2 * dotProduct(centers[j], x))
+            newAssignments.append(bestJ)
+
+        if newAssignments == assignments:
+            break
+        assignments = newAssignments
+
+        for j in range(K):
+            clusterPoints = [examples[i] for i in range(len(examples)) if assignments[i] == j]
+            if len(clusterPoints) > 0:
+                centers[j] = {}
+                for x in clusterPoints:
+                    increment(centers[j], 1.0, x)
+                for f in centers[j]:
+                    centers[j][f] /= len(clusterPoints)
+
+    totalCost = 0.0
+    for i in range(len(examples)):
+        totalCost += dotProduct(centers[assignments[i]], centers[assignments[i]]) \
+                   - 2 * dotProduct(centers[assignments[i]], examples[i]) \
+                   + dotProduct(examples[i], examples[i])
+
+    return centers, assignments, totalCost</code></pre>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 4c ==================== -->
+    <div id="part4c">
+      <h2 class="section-title"><span class="icon">🔗</span> Part 4c: K-Means with Constraints</h2>
+
+      <p>Sometimes we <strong>know in advance</strong> that certain points must be in the same cluster. For example, $S = \{(1,5), (2,3), (3,4)\}$ means: "points 2, 3, 4 must be in one cluster and points 1, 5 must be in another."</p>
+
+      <div class="card concept">
+        <span class="card-label">Key Insight: Group constrained points together</span>
+        <p>First, use $S$ to build <strong>groups</strong> of points that must be together. This is like finding <strong>connected components</strong> in a graph where the edges are the constraint pairs.</p>
+        <p><strong>Example:</strong> $S = \{(2,3), (3,4)\}$<br>
+        → Edge 2-3 and edge 3-4 connect into one component: <strong>Group A = {2, 3, 4}</strong><br>
+        → Point 1 and 5 are unconstrained: <strong>Group B = {1}</strong>, <strong>Group C = {5}</strong></p>
+      </div>
+
+      <h3 class="section-subtitle">The Modified Algorithm</h3>
+
+      <div class="card answer">
+        <span class="card-label">✨ Constrained K-Means</span>
+        <p><strong>Preprocessing:</strong> Build groups from constraint set $S$. Each group is a set of points that must share the same cluster assignment.</p>
+
+        <p><strong>Repeat</strong> until convergence:</p>
+
+        <p style="margin-left: 20px;"><strong>Step 1: ASSIGN (modified)</strong></p>
+        <p style="margin-left: 20px;">For each <strong>group</strong> $G$ (not individual point), assign <em>all</em> points in the group to the center that minimizes the <em>total distance for the entire group</em>:</p>
+        <p style="text-align: center;">$z_G = \arg\min_j \sum_{i \in G} \|\mu_j - \phi(x_i)\|^2$</p>
+
+        <p style="margin-left: 20px;"><strong>Step 2: UPDATE (unchanged)</strong></p>
+        <p style="margin-left: 20px;">Recompute each center as the average of all its assigned points, exactly as before:</p>
+        <p style="text-align: center;">$\mu_j = \dfrac{1}{|C_j|} \sum_{i \in C_j} \phi(x_i)$</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why does this work?</span>
+        <p>In normal K-Means, each point independently picks its closest center. Here, a whole group must <strong>vote together</strong>. We find the center that minimizes the combined distance for the group — like a family that must choose one school for all their kids.</p>
+        <p>The update step stays the same because the formula for the mean doesn't need to know about constraints — it just averages whatever points are in the cluster.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Still an alternating minimization</span>
+        <p>This still follows the pattern of alternating minimization:</p>
+        <ul>
+          <li><strong>Fix centers, optimize assignments</strong> (subject to group constraints)</li>
+          <li><strong>Fix assignments, optimize centers</strong> (take the mean)</li>
+        </ul>
+        <p>Each step decreases (or maintains) the total reconstruction loss, so the algorithm still converges.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 4d ==================== -->
+    <div id="part4d">
+      <h2 class="section-title"><span class="icon">🔄</span> Part 4d: Why Run Multiple Times?</h2>
+
+      <div class="final-answer">
+        <h3>✅ Answer — Part 4d</h3>
+        <p style="text-align: left;">K-Means only finds a <strong>local minimum</strong> — not necessarily the global best clustering. Different random initializations lead to different local minima (as we saw in Part 4a!).</p>
+        <p style="text-align: left;">By running K-Means <strong>multiple times</strong> with different initializations and <strong>keeping the result with the lowest reconstruction loss</strong>, we are more likely to find a solution close to the global optimum.</p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Analogy</span>
+        <p>Think of K-Means as dropping a ball down a hilly landscape. It rolls to the nearest valley (local minimum). If you drop the ball from different starting positions, it might reach a <strong>deeper valley</strong>. Running multiple times = dropping the ball many times and picking the deepest valley found.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== PART 4e ==================== -->
+    <div id="part4e">
+      <h2 class="section-title"><span class="icon">📏</span> Part 4e: Scaling Dimensions</h2>
+
+      <h3 class="section-subtitle">Case 1: Scaling ALL dimensions by the same factor</h3>
+
+      <div class="final-answer">
+        <h3>✅ YES — Same clusters are guaranteed</h3>
+        <p style="text-align: left;">If we multiply every data point and centroid by a constant $c$ in <strong>all</strong> dimensions, then:</p>
+        <p style="text-align: center;">$\|c \cdot \mu_j - c \cdot \phi(x_i)\|^2 = c^2 \cdot \|\mu_j - \phi(x_i)\|^2$</p>
+        <p style="text-align: left;">Every distance gets multiplied by the same factor $c^2$. Since the factor is constant, the <strong>relative ordering of distances doesn't change</strong>. If point $i$ was closest to center $j$ before scaling, it's still closest after scaling.</p>
+        <p style="text-align: left;">Therefore, the assignment step produces identical results, the update step computes the same averages (scaled by $c$), and the algorithm converges to the same clusters.</p>
+      </div>
+
+      <h3 class="section-subtitle">Case 2: Scaling ONLY certain dimensions</h3>
+
+      <div class="final-answer" style="border-color: rgba(255, 82, 82, 0.3);">
+        <h3 style="color: var(--accent-red);">❌ NO — Clusters may change</h3>
+        <p style="text-align: left;">Scaling different dimensions by different amounts changes the <strong>relative importance</strong> of those dimensions, which can flip which center is closest.</p>
+      </div>
+
+      <div class="card concept">
+        <span class="card-label">Counterexample</span>
+        <p>Consider 3 points with K=2:</p>
+        <ul>
+          <li>$A = [0, 0]$, &ensp; $B = [1, 0]$, &ensp; $C = [0, 3]$</li>
+        </ul>
+        <p><strong>Without scaling:</strong></p>
+        <ul>
+          <li>$d(A, B) = 1^2 + 0^2 = 1$ (A and B are close!)</li>
+          <li>$d(A, C) = 0^2 + 3^2 = 9$</li>
+        </ul>
+        <p>Natural clustering: <strong>{A, B}</strong> and <strong>{C}</strong></p>
+
+        <p style="margin-top: 16px;"><strong>Now scale dimension 1 by 10:</strong> $A' = [0,0]$, $B' = [10,0]$, $C' = [0,3]$</p>
+        <ul>
+          <li>$d(A', B') = 10^2 + 0^2 = 100$ (A and B are now far apart!)</li>
+          <li>$d(A', C') = 0^2 + 3^2 = 9$</li>
+        </ul>
+        <p>Natural clustering: <strong>{A, C}</strong> and <strong>{B}</strong> — <strong>completely different!</strong></p>
+      </div>
+
+      <div class="card intuition">
+        <span class="card-label">💡 Why this matters in practice</span>
+        <p>This is why <strong>feature normalization</strong> is important in machine learning. If one feature (e.g., salary in dollars) has a much larger range than another (e.g., age in years), it dominates the distance calculation and the clustering is biased toward that feature.</p>
+      </div>
+    </div>
+
+    <div class="divider"></div>
+
+    <!-- ==================== TAKEAWAYS ==================== -->
+    <div id="takeaways">
+      <h2 class="section-title"><span class="icon">🧠</span> Big Picture Takeaways</h2>
+
+      <div class="takeaway">
+        <div class="num">1</div>
+        <div class="content">
+          <p><strong>K-Means is simple but powerful.</strong> Just two steps repeated: assign points to nearest center, then update centers to be the average. It always converges because each step reduces (or maintains) the reconstruction loss.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">2</div>
+        <div class="content">
+          <p><strong>Initialization matters a lot.</strong> Different starting centers can lead to completely different final clusters. Always run K-Means multiple times and keep the best result.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">3</div>
+        <div class="content">
+          <p><strong>Sparse vector tricks save time.</strong> Rather than computing full distances, use the expansion $\|\mu - x\|^2 = \|\mu\|^2 - 2\mu \cdot x + \|x\|^2$ and precompute the squared norms. The dot product with sparse $x$ only touches non-zero entries.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">4</div>
+        <div class="content">
+          <p><strong>Constraints can be incorporated naturally.</strong> To force certain points into the same cluster, just group them and assign the entire group together based on total distance to each center.</p>
+        </div>
+      </div>
+
+      <div class="takeaway">
+        <div class="num">5</div>
+        <div class="content">
+          <p><strong>Feature scaling affects clustering.</strong> Uniform scaling preserves clusters, but non-uniform scaling changes which dimensions matter most — always normalize your features before clustering!</p>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</body>
+</html>

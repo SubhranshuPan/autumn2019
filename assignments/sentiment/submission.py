@@ -22,7 +22,12 @@ def extractWordFeatures(x):
     Example: "I am what I am" --> {'I': 2, 'am': 2, 'what': 1}
     """
     # BEGIN_YOUR_CODE (our solution is 4 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    d = {}
+    for word in x.split():
+        d[word] = d.get(word, 0) + 1
+    return d
+
+    # return dict(collections.Counter(x.split()))
     # END_YOUR_CODE
 
 ############################################################
@@ -43,7 +48,15 @@ def learnPredictor(trainExamples, testExamples, featureExtractor, numIters, eta)
     '''
     weights = {}  # feature => weight
     # BEGIN_YOUR_CODE (our solution is 12 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    for i in range(numIters):
+        for x, y in trainExamples:
+            phi = featureExtractor(x)
+            margin = dotProduct(weights, phi) * y
+            if margin < 1:
+                increment(weights, eta * y, phi)
+        trainError = evaluatePredictor(trainExamples, lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
+        testError = evaluatePredictor(testExamples, lambda x: (1 if dotProduct(featureExtractor(x), weights) >= 0 else -1))
+        print(("Official: train error: %s, test error = %s" % (trainError, testError)))
     # END_YOUR_CODE
     return weights
 
@@ -62,7 +75,8 @@ def generateDataset(numExamples, weights):
     # y should be 1 or -1 as classified by the weight vector.
     def generateExample():
         # BEGIN_YOUR_CODE (our solution is 2 lines of code, but don't worry if you deviate from this)
-        raise Exception("Not implemented yet")
+        phi = {key: random.random() for key in random.sample(list(weights.keys()), random.randint(1, len(weights)))}
+        y = 1 if dotProduct(weights, phi) >= 0 else -1
         # END_YOUR_CODE
         return (phi, y)
     return [generateExample() for _ in range(numExamples)]
@@ -79,7 +93,12 @@ def extractCharacterFeatures(n):
     '''
     def extract(x):
         # BEGIN_YOUR_CODE (our solution is 6 lines of code, but don't worry if you deviate from this)
-        raise Exception("Not implemented yet")
+        d = {}
+        s = x.replace(' ', '')
+        for i in range(len(s) - n + 1):
+            gram = s[i:i+n]
+            d[gram] = d.get(gram, 0) + 1
+        return d
         # END_YOUR_CODE
     return extract
 
@@ -98,5 +117,36 @@ def kmeans(examples, K, maxIters):
             final reconstruction loss)
     '''
     # BEGIN_YOUR_CODE (our solution is 25 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    centers = [dict(examples[i]) for i in random.sample(range(len(examples)), K)]
+    assignments = [0] * len(examples)
+
+    for t in range(maxIters):
+        centerNorms = [dotProduct(c, c) for c in centers]
+        
+        newAssignments = []
+        for i, x in enumerate(examples):
+            bestJ = min(range(K), key=lambda j: centerNorms[j] - 2 * dotProduct(centers[j], x))
+            newAssignments.append(bestJ)
+
+        if newAssignments == assignments:
+            break
+        assignments = newAssignments
+
+        for j in range(K):
+            clusterPoints = [examples[i] for i in range(len(examples)) if assignments[i] == j]
+            if len(clusterPoints) > 0:
+                centers[j] = {}
+                for x in clusterPoints:
+                    increment(centers[j], 1.0, x)
+                for f in centers[j]:
+                    centers[j][f] /= len(clusterPoints)
+
+        
+    totalCost = 0.0
+    for i in range(len(examples)):
+        totalCost += dotProduct(centers[assignments[i]], centers[assignments[i]]) \
+                  - 2 * dotProduct(centers[assignments[i]], examples[i]) \
+                  + dotProduct(examples[i], examples[i])
+        
+    return centers, assignments, totalCost
     # END_YOUR_CODE
