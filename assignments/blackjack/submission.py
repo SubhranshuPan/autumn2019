@@ -12,7 +12,7 @@ class CounterexampleMDP(util.MDP):
     def startState(self):
         # BEGIN_YOUR_CODE (our solution is 1 line of code, but don't worry if you deviate from this)
         raise Exception("Not implemented yet")
-        # END_YOUR_CODE
+        # END YOUR CODE
 
     # Return a list of strings representing actions possible from |state|.
     def actions(self, state):
