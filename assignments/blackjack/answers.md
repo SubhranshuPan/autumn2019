@@ -125,4 +125,55 @@ Running the γ=1 solver on this transformed MDP returns exactly the discounted o
 - Problem 2b: acyclic ⇒ topological order ⇒ one‑pass DP.
 - Problem 2c: add a chance to jump to a zero‑reward absorbing state with probability (1‑γ) and scale real probabilities by γ.
 
-Feel free to copy the explanations above into your own notes or into a markdown file for easy reference. Good luck with the rest of the assignment!
+
+---
+
+## Problem 3 – Peeking Blackjack
+
+### 3a – Implementing `succAndProbReward` for `BlackjackMDP`
+
+**Goal:** Model the modified Blackjack game as an MDP by filling in the `succAndProbReward(state, action)` method. The state is a tuple `(totalCardValueInHand, nextCardIndexIfPeeked, deckCardCounts)`.
+
+**Rules to encode:**
+
+| Action | Behavior |
+|--------|----------|
+| **Take** | If you peeked before (peekIdx not None), draw that card deterministically. Otherwise, draw a card proportionally to remaining counts. If the new total > threshold → bust (reward 0, terminal). If deck runs out → reward = new total (quit-like). Otherwise → reward 0, continue. |
+| **Peek** | Allowed only if peekIdx is None. Pay `-peekCost`, keep hand & deck unchanged, store the index of the card you saw. |
+| **Quit** | Ends game immediately; reward = current hand total. |
+
+**Key edge cases handled:**
+- Terminal states (`counts is None`) return `[]` for any action.
+- Can't peek twice in a row → return `[]` if peekIdx is not None.
+- Deck empty after a safe draw → treat as a quit with reward = new total.
+- Bust after draw → reward 0, terminal state.
+
+### 3b – Designing a deck where peeking is optimal ≥10% of the time
+
+**Goal:** Return a `BlackjackMDP` such that after running value iteration, at least 10% of states have optimal action `Peek`.
+
+**Why some decks fail and `[2, 3, 20]` works:**
+
+The extra value of peeking over just quitting is roughly:
+
+```
+extra = probability(safe) × (V(t + safeCard) − t) − peekCost
+        ╰──── gain from safe draw ────╯
+```
+
+- With safe card = **1**, the gain is at most `(t+1) − t = 1`. Multiply by probability (≤ 0.5). Subtract peek cost = 1 → **negative**. Peek never beats quit.
+- With safe cards = **2 or 3** (average 2.5), the gain is `(t+2) − t = 2` or `(t+3) − t = 3`. Average ≈ 2.5. With ⅔ chance of safe, expected gain ≈ 1.67. Subtract peek cost 1 → **positive**. Peek now beats quit.
+
+**Winning formula for peeking to be optimal:**
+1. One (or more) cards cause a bust from a moderate hand total.
+2. The safe cards give decent progress (value ≥ 2) so the future value after a safe draw is noticeably higher than the current hand total.
+3. Peek cost is small enough (here fixed at 1) that the gain from avoiding bust isn't eaten up by the cost.
+
+**Example that passes the grader:**
+
+```python
+def peekingMDP():
+    return BlackjackMDP(cardValues=[2, 3, 20], multiplicity=5, threshold=20, peekCost=1)
+```
+
+Deck has 5 copies each of 2, 3, and 20. With threshold = 20, the 20 is dangerous (causes bust if hand total ≥ 1). The safe cards 2 and 3 give enough progress to make peeking worthwhile in many states. Peek cost = 1 (fixed by assignment). Result: >10% of states have optimal action = Peek.

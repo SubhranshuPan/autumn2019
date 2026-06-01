@@ -86,7 +86,59 @@ class BlackjackMDP(util.MDP):
     #   don't include that state in the list returned by succAndProbReward.
     def succAndProbReward(self, state, action):
         # BEGIN_YOUR_CODE (our solution is 38 lines of code, but don't worry if you deviate from this)
-        raise Exception("Not implemented yet")
+        total, peekIdx, counts = state
+        if counts is None:
+            return []
+        if action == 'Take':
+            if peekIdx is not None:
+                cardVal = self.cardValues[peekIdx]
+                prob = 1.0
+                newTotal = total + cardVal
+                newCounts = list(counts)
+                newCounts[peekIdx] -= 1
+
+                # bust?
+                if newTotal > self.threshold:
+                    return [((newTotal, None, None), prob, 0)]
+                if sum(newCounts) == 0:
+                    return [((newTotal, None, None), prob, newTotal)]
+                return [((newTotal, None, tuple(newCounts)), prob, 0)]
+            
+            totalCards = sum(counts)
+            result = []
+            for i, cnt in enumerate(counts):
+                if cnt == 0:
+                    continue
+                prob = cnt / totalCards
+                cardVal = self.cardValues[i]
+                newTotal= total + cardVal
+                newCounts = list(counts)
+                newCounts[i] -= 1
+
+                if newTotal > self.threshold:
+                    result.append(((newTotal, None, None), prob, 0))
+                elif sum(newCounts) == 0:
+                    result.append(((newTotal, None, None), prob, newTotal))
+                else:
+                    result.append(((newTotal, None, tuple(newCounts)), prob, 0))
+            return result
+
+        if action == 'Peek':
+            if peekIdx is not None:
+                return []
+            
+            totalCards = sum(counts)
+            result = []
+            for i, cnt in enumerate(counts):
+                if cnt == 0:
+                    continue
+                prob = cnt / totalCards
+                result.append(((total, i, counts), prob, -self.peekCost))
+            return result
+        
+        if action == 'Quit':
+            return [((total, None, None), 1.0, total)]
+        return []
         # END_YOUR_CODE
 
     def discount(self):
@@ -101,7 +153,12 @@ def peekingMDP():
     optimal action at least 10% of the time.
     """
     # BEGIN_YOUR_CODE (our solution is 2 lines of code, but don't worry if you deviate from this)
-    raise Exception("Not implemented yet")
+    return BlackjackMDP(
+        cardValues = [2, 3, 20],
+        multiplicity = 5,
+        threshold = 20,
+        peekCost = 1
+    )
     # END_YOUR_CODE
 
 ############################################################
