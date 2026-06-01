@@ -17,10 +17,7 @@ class CounterexampleMDP(util.MDP):
     # Return a list of strings representing actions possible from |state|.
     def actions(self, state):
         # BEGIN_YOUR_CODE (our solution is 1 line of code, but don't worry if you deviate from this)
-        if state == 's0':
-            return ['a', 'b']
-        else:
-            return []
+        return ['a', 'b']
         # END_YOUR_CODE
 
     # Given a |state| and |action|, return a list of (newState, prob, reward) tuples
