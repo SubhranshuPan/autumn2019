@@ -22,7 +22,8 @@ Discount factor γ = 1.
 
 We compute V₀(s)=0 for all s (iteration 0).
 
-### Iteration 1
+### Iteration 1
+
 - **State –2**: terminal → V₁(–2)=0  
 - **State –1**:  
   - Action –1: 0.8·[20+V₀(–2)] + 0.2·[‑5+V₀(0)] = 0.8·20 + 0.2·(‑5) = **15**  
@@ -56,7 +57,8 @@ Now use V₁ values.
   → V₂(1)=**23** (choose +1)
 - **State 2**: V₂(2)=0
 
-**Optimal policy after two iterations**  
+**Optimal policy after two iterations**
+
 - State –1 → action **‑1**  
 - State 0  → action **+1**  
 - State 1  → action **+1**
